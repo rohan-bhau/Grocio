@@ -1,62 +1,46 @@
 "use client";
 
-import axios from "axios";
+// import axios from "axios";
 import { motion } from "motion/react";
-import { div } from "motion/react-client";
-import { signIn } from "next-auth/react";
+import { signIn, useSession } from "next-auth/react";
 import Link from "next/link";
-import { useState } from "react";
+import { FormEvent, useState } from "react";
 import { BiLeaf } from "react-icons/bi";
 import { CiMail } from "react-icons/ci";
 import { FaArrowLeft, FaRegEye } from "react-icons/fa";
 import { FcGoogle } from "react-icons/fc";
 import { FiLock, FiLogIn } from "react-icons/fi";
 import { GoEyeClosed } from "react-icons/go";
-import { LuUserRound } from "react-icons/lu";
+// import { LuUserRound } from "react-icons/lu";
 
-type propType = {
-  previousStep: (s: number) => void;
-};
-
-const RegisterForm = ({ previousStep }: propType) => {
-  const [name, setName] = useState("");
+const LoginPage = () => {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [focused, setFocused] = useState<string | null>(null);
   const [showPassword, setShowPassword] = useState(false);
   const [loading, setLoading] = useState(false);
 
-  const isValid = name && email && password.length >= 6;
+  const isValid = email && password.length >= 6;
+  const session = useSession();
+  console.log(session.data?.user);
 
-
-  const handleRegister = async (e: React.FormEvent) => {
-    e.preventDefault()
-    setLoading(true)
+  const handleLogin = async (e: FormEvent) => {
+    e.preventDefault();
+    setLoading(true);
     try {
-      const result = await axios.post("/api/auth/register", {
-        name,
+      await signIn("credentials", {
         email,
         password,
       });
-      console.log(result.data);
-      setLoading(false)
+      setLoading(false);
     } catch (error) {
       console.log(error);
-      setLoading(false)
+      setLoading(false);
     }
   };
 
   return (
     <div className="min-h-screen flex items-center justify-center bg-green-50 px-6">
-      {/* Back */}
-      <button
-        onClick={() => previousStep(1)}
-        className="absolute top-6 left-6 flex items-center gap-2 text-green-600 hover:text-green-700 transition cursor-pointer"
-      >
-        <FaArrowLeft />
-        <span className="text-sm font-medium">Back</span>
-      </button>
-
       {/* Card */}
       <motion.div
         initial={{ opacity: 0, y: 10 }}
@@ -66,25 +50,17 @@ const RegisterForm = ({ previousStep }: propType) => {
         {/* Header */}
         <div className="text-center">
           <h1 className="text-2xl font-semibold text-gray-900">
-            Create account
+            Welcome Back!
           </h1>
           <p className="text-sm text-gray-500 mt-1 flex items-center justify-center gap-1">
-            Join Grocio <BiLeaf className="text-green-600" />
+            Login to Grocio <BiLeaf className="text-green-600" />
           </p>
         </div>
 
         {/* Form */}
-        <form onSubmit={handleRegister} className="mt-8 space-y-6">
+        <form onSubmit={handleLogin} className="mt-8 space-y-6">
           {/* Floating Input Component */}
           {[
-            {
-              id: "name",
-              label: "Full name",
-              icon: <LuUserRound />,
-              type: "text",
-              value: name,
-              setValue: setName,
-            },
             {
               id: "email",
               label: "Email address",
@@ -106,8 +82,7 @@ const RegisterForm = ({ previousStep }: propType) => {
                   onFocus={() => setFocused(field.id)}
                   onBlur={() => setFocused(null)}
                   onChange={(e) => field.setValue(e.target.value)}
-                  className="peer w-full border border-gray-300 rounded-xl py-3 pl-10 pr-4 text-sm bg-transparent
-                  focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-green-500 transition"
+                  className="peer w-full border border-gray-300 rounded-xl py-3 pl-10 pr-4 text-sm bg-transparent focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-green-500 transition"
                 />
 
                 <label
@@ -136,8 +111,7 @@ const RegisterForm = ({ previousStep }: propType) => {
               onFocus={() => setFocused("password")}
               onBlur={() => setFocused(null)}
               onChange={(e) => setPassword(e.target.value)}
-              className="peer w-full border border-gray-300 rounded-xl py-3 pl-10 pr-10 text-sm bg-transparent
-              focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-green-500 transition"
+              className="peer w-full border border-gray-300 rounded-xl py-3 pl-10 pr-10 text-sm bg-transparent  focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-green-500 transition"
             />
 
             <label
@@ -185,10 +159,10 @@ const RegisterForm = ({ previousStep }: propType) => {
             {loading ? (
               <div className="flex gap-2 items-center">
                 <span className="w-5 h-5 border-2 border-white border-t-transparent rounded-full animate-spin"></span>{" "}
-                <span>Creating Your Account...</span>
+                <span>Logging in...</span>
               </div>
             ) : (
-              "Create account"
+              "Sign In"
             )}
           </button>
 
@@ -202,9 +176,8 @@ const RegisterForm = ({ previousStep }: propType) => {
           {/* Google */}
           <button
             type="button"
-            className="w-full flex items-center justify-center gap-3 py-3 border border-gray-300 rounded-xl text-sm 
-            hover:bg-green-50 hover:border-green-300 transition cursor-pointer"
-            onClick={()=>signIn("google")}
+            className="w-full flex items-center justify-center gap-3 py-3 border border-gray-300 rounded-xl text-sm  hover:bg-green-50 hover:border-green-300 transition cursor-pointer"
+            onClick={() => signIn("google")}
           >
             <FcGoogle />
             Continue with Google
@@ -213,9 +186,12 @@ const RegisterForm = ({ previousStep }: propType) => {
 
         {/* Footer */}
         <p className="text-center text-xs text-gray-500 mt-6">
-          Already have an account?{" "}
-          <Link href={'/login'} className="text-green-600 hover:text-green-700 hover:underline underline-offset-2 cursor-pointer inline-flex items-center gap-1">
-            <FiLogIn /> Sign in
+          Don't have an account?{" "}
+          <Link
+            href={"/register"}
+            className="text-green-600 hover:text-green-700 hover:underline underline-offset-2 cursor-pointer inline-flex items-center gap-1"
+          >
+            <FiLogIn /> Register
           </Link>
         </p>
       </motion.div>
@@ -223,4 +199,4 @@ const RegisterForm = ({ previousStep }: propType) => {
   );
 };
 
-export default RegisterForm;
+export default LoginPage;

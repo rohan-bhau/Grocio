@@ -1,12 +1,13 @@
 import mongoose from "mongoose";
 
 interface IUser {
-    _id?:mongoose.Types.ObjectId
-    name: string
-    email: string
-    password: string
-    mobile?: string
-    role: "user" | "deliveryBoy" | "admin"
+  _id?: mongoose.Types.ObjectId;
+  name: string;
+  email: string;
+  password?: string;
+  mobile?: string;
+  role: "user" | "deliveryBoy" | "admin";
+  image?: string;
 }
 
 const userSchema = new mongoose.Schema<IUser>(
@@ -22,7 +23,11 @@ const userSchema = new mongoose.Schema<IUser>(
     },
     password: {
       type: String,
-      required: true,
+      required: false,
+    },
+    image: {
+      type: String,
+      required: false,
     },
     mobile: {
       type: String,
@@ -30,13 +35,13 @@ const userSchema = new mongoose.Schema<IUser>(
     },
     role: {
       type: String,
-        enum: ["user", "deliveryBoy", "admin"],
-      default: "user"
+      enum: ["user", "deliveryBoy", "admin"],
+      default: "user",
     },
   },
   { timestamps: true },
 );
 
-const User = mongoose.models.User || mongoose.model("User", userSchema)
+const User = mongoose.models.User || mongoose.model("User", userSchema);
 
-export default User
+export default User;

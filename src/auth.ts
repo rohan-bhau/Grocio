@@ -4,6 +4,16 @@ import Credentials from "next-auth/providers/credentials";
 import connectDb from "./lib/db";
 import User from "./models/user.model";
 import bcrypt from "bcryptjs";
+import Google from "next-auth/providers/google";
+
+if (!process.env.AUTH_SECRET) {
+  throw new Error("Missing AUTH_SECRET environment variable for NextAuth.");
+}
+if (!process.env.GOOGLE_CLIENT_ID || !process.env.GOOGLE_CLIENT_SECRET) {
+  throw new Error(
+    "Missing Google OAuth environment variables: GOOGLE_CLIENT_ID and GOOGLE_CLIENT_SECRET.",
+  );
+}
 
 export const { handlers, signIn, signOut, auth } = NextAuth({
   providers: [
@@ -38,8 +48,35 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
         };
       },
     }),
+    Google({
+      clientId: process.env.GOOGLE_CLIENT_ID,
+      clientSecret: process.env.GOOGLE_CLIENT_SECRET,
+    }),
   ],
   callbacks: {
+    async signIn({ user, account }) {
+      if (account?.provider === "google") {
+        await connectDb();
+
+        const email = user.email as string;
+        if (!email) return false;
+
+        let dbUser = await User.findOne({ email });
+
+        if (!dbUser) {
+          dbUser = await User.create({
+            name: user.name,
+            email,
+            image: user.image,
+          });
+        }
+
+        user.id = dbUser._id.toString();
+        user.role = dbUser.role;
+      }
+      return true;
+    },
+
     jwt({ token, user }) {
       if (user) {
         ((token.id = user.id),
