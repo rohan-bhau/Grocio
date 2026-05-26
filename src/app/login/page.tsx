@@ -4,6 +4,7 @@
 import { motion } from "motion/react";
 import { signIn, useSession } from "next-auth/react";
 import Link from "next/link";
+import { redirect } from "next/navigation";
 import { FormEvent, useState } from "react";
 import { BiLeaf } from "react-icons/bi";
 import { CiMail } from "react-icons/ci";
@@ -33,6 +34,7 @@ const LoginPage = () => {
         password,
       });
       setLoading(false);
+      redirect("/")
     } catch (error) {
       console.log(error);
       setLoading(false);
@@ -177,7 +179,7 @@ const LoginPage = () => {
           <button
             type="button"
             className="w-full flex items-center justify-center gap-3 py-3 border border-gray-300 rounded-xl text-sm  hover:bg-green-50 hover:border-green-300 transition cursor-pointer"
-            onClick={() => signIn("google")}
+            onClick={() => signIn("google",{callbackUrl:"/"})}
           >
             <FcGoogle />
             Continue with Google
