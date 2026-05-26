@@ -23,7 +23,7 @@ const LoginPage = () => {
 
   const isValid = email && password.length >= 6;
   const session = useSession();
-  console.log(session.data?.user);
+  // console.log(session.data?.user);
 
   const handleLogin = async (e: FormEvent) => {
     e.preventDefault();
