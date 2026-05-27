@@ -1,6 +1,7 @@
 "use client";
 import axios from "axios";
 import { motion } from "motion/react";
+import { useSession } from "next-auth/react";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
 import { FaArrowRight } from "react-icons/fa";
@@ -19,6 +20,7 @@ const EditRoleMobile = () => {
   const [selectedRole, setSelectedRole] = useState("");
   const [mobile, setMobile] = useState("");
   const [loading, setLoading] = useState(false);
+  const {update} = useSession()
 
   const isValid = selectedRole && mobile.length === 11;
 
@@ -30,6 +32,7 @@ const EditRoleMobile = () => {
         role: selectedRole,
         mobile,
       });
+      await update({role:selectedRole})
       router.push("/");
     } catch (error) {
       console.log(error);

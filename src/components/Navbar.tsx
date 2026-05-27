@@ -5,7 +5,18 @@ import Image from "next/image";
 import Link from "next/link";
 import { signOut } from "next-auth/react";
 import { motion, AnimatePresence } from "framer-motion";
-import { FiShoppingCart, FiSearch, FiLogOut, FiBox } from "react-icons/fi";
+import {
+  FiShoppingCart,
+  FiSearch,
+  FiLogOut,
+  FiBox,
+  FiGrid,
+  FiTruck,
+  FiPlusCircle,
+  FiList,
+  FiBell,
+  FiClock,
+} from "react-icons/fi";
 import { LuUserRound } from "react-icons/lu";
 import logo from "@/assets/nav-logo.png";
 
@@ -46,80 +57,129 @@ const Navbar = ({ user }: { user: IUser }) => {
   return (
     <div
       suppressHydrationWarning
-      className="w-[95%] fixed top-4 left-1/2 -translate-x-1/2 bg-linear-to-r from-green-600 to-green-800 rounded-2xl shadow-[0_10px_30px_rgba(0,0,0,0.25)] hover:shadow-[0_12px_40px_rgba(0,0,0,0.3)] transition-all duration-300 flex items-center justify-between h-20 px-4 md:px-8 z-50"
+      className="w-[95%] fixed top-4 left-1/2 -translate-x-1/2 bg-gradient-to-r from-green-600 to-green-800 rounded-2xl shadow-[0_10px_30px_rgba(0,0,0,0.25)] hover:shadow-[0_12px_40px_rgba(0,0,0,0.3)] transition-all duration-300 flex items-center justify-between h-20 px-4 md:px-8 z-50"
     >
-      {/* LOGO */}
-      <Link href="/" className="flex items-center group">
-        <div className="bg-white px-3 py-1.5 rounded-lg shadow-sm transition-all duration-300 group-hover:scale-[1.05] group-hover:shadow-md">
-          <Image
-            src={logo}
-            width={120}
-            height={40}
-            alt="Grocio logo"
-            priority
-            style={{ height: "auto" }}
-          />
-        </div>
-      </Link>
-
-      {/* DESKTOP SEARCH */}
-      <div className="hidden md:flex w-full max-w-md mx-6">
-        <div className="relative w-full group">
-          <FiSearch className="absolute left-3 top-3 text-gray-400 group-focus-within:text-green-600 transition duration-300" />
-          <input
-            type="text"
-            placeholder="Search groceries..."
-            className="w-full pl-10 pr-4 py-2.5 rounded-xl text-sm bg-white/95 backdrop-blur-md border border-white/30 focus:outline-none focus:ring-2 focus:ring-white/70 focus:shadow-[0_0_10px_rgba(255,255,255,0.6)] transition-all duration-300"
-          />
-        </div>
+      {/* 1. LEFT SIDE: LOGO */}
+      <div className="flex-1 flex justify-start">
+        <Link href="/" className="flex items-center group">
+          <div className="bg-white px-3 py-1.5 rounded-lg shadow-sm transition-all duration-300 group-hover:scale-[1.05] group-hover:shadow-md">
+            <Image
+              src={logo}
+              width={120}
+              height={40}
+              alt="Grocio logo"
+              priority
+              style={{ height: "auto" }}
+            />
+          </div>
+        </Link>
       </div>
 
-      {/* RIGHT SIDE */}
-      <div className="flex items-center gap-4 md:gap-6">
-        {/* MOBILE SEARCH ICON */}
-        <div className="md:hidden" ref={searchRef}>
-          <button
-            onClick={() => setIsSearchOpen(!isSearchOpen)}
-            className="p-2 rounded-lg transition-all duration-300 hover:bg-white/15 hover:scale-110 active:scale-95"
-          >
-            <FiSearch className="text-white text-xl" />
-          </button>
+      {/* 2. MIDDLE SIDE: SEARCH (USER) OR QUICK LINKS (ADMIN/DELIVERY) */}
+      <div className="hidden md:flex flex-[1.5] justify-center items-center gap-4">
+        {/* User - Center Search Bar */}
+        {user?.role === "user" && (
+          <div className="relative w-full max-w-md group">
+            <FiSearch className="absolute left-3 top-3 text-gray-400 group-focus-within:text-green-600 transition duration-300" />
+            <input
+              type="text"
+              placeholder="Search groceries..."
+              className="w-full pl-10 pr-4 py-2.5 rounded-xl text-sm bg-white/95 backdrop-blur-md border border-white/30 focus:outline-none focus:ring-2 focus:ring-white/70 focus:shadow-[0_0_10px_rgba(255,255,255,0.6)] transition-all duration-300"
+            />
+          </div>
+        )}
 
-          {/* MOBILE SEARCH DROPDOWN */}
-          <AnimatePresence>
-            {isSearchOpen && (
-              <motion.div
-                initial={{ opacity: 0, y: -10 }}
-                animate={{ opacity: 1, y: 0 }}
-                exit={{ opacity: 0, y: -10 }}
-                transition={{ duration: 0.2 }}
-                className="absolute top-[85px] left-0 w-full px-2 sm:px-0"
-              >
-                <div className="w-full bg-white p-3 rounded-xl shadow-xl border border-gray-100">
-                  <div className="relative w-full">
-                    <FiSearch className="absolute left-3 top-3 text-gray-400" />
-                    <input
-                      type="text"
-                      placeholder="Search groceries..."
-                      className="w-full pl-10 pr-4 py-2.5 rounded-lg text-sm bg-gray-50 border border-gray-200 focus:outline-none focus:ring-2 focus:ring-green-500"
-                    />
+        {/* Admin - Quick Links (Visible on Desktop) */}
+        {user?.role === "admin" && (
+          <>
+            <Link
+              href="/admin/add-product"
+              className="flex items-center gap-2 text-white/90 hover:text-white bg-white/10 hover:bg-white/20 px-4 py-2 rounded-xl transition-all duration-300 font-medium text-sm border border-white/10"
+            >
+              <FiPlusCircle className="text-lg" />
+              Add Grocery
+            </Link>
+            <Link
+              href="/admin/orders"
+              className="flex items-center gap-2 text-white/90 hover:text-white bg-white/10 hover:bg-white/20 px-4 py-2 rounded-xl transition-all duration-300 font-medium text-sm border border-white/10"
+            >
+              <FiList className="text-lg" />
+              Manage Orders
+            </Link>
+          </>
+        )}
+
+        {/* Delivery Boy - Quick Links (Visible on Desktop) */}
+        {user?.role === "deliveryBoy" && (
+          <>
+            <Link
+              href="/delivery/requests"
+              className="flex items-center gap-2 text-white/90 hover:text-white bg-white/10 hover:bg-white/20 px-4 py-2 rounded-xl transition-all duration-300 font-medium text-sm border border-white/10"
+            >
+              <FiBell className="text-lg" />
+              New Requests
+            </Link>
+            <Link
+              href="/delivery/history"
+              className="flex items-center gap-2 text-white/90 hover:text-white bg-white/10 hover:bg-white/20 px-4 py-2 rounded-xl transition-all duration-300 font-medium text-sm border border-white/10"
+            >
+              <FiClock className="text-lg" />
+              History
+            </Link>
+          </>
+        )}
+      </div>
+
+      {/* 3. RIGHT SIDE: CART & PROFILE */}
+      <div className="flex-1 flex justify-end items-center gap-4 md:gap-6">
+        {/* MOBILE SEARCH ICON - SHUDHU 'user' ER JONNE */}
+        {user?.role === "user" && (
+          <div className="md:hidden" ref={searchRef}>
+            <button
+              onClick={() => setIsSearchOpen(!isSearchOpen)}
+              className="p-2 rounded-lg transition-all duration-300 hover:bg-white/15 hover:scale-110 active:scale-95"
+            >
+              <FiSearch className="text-white text-xl" />
+            </button>
+
+            {/* MOBILE SEARCH DROPDOWN */}
+            <AnimatePresence>
+              {isSearchOpen && (
+                <motion.div
+                  initial={{ opacity: 0, y: -10 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  exit={{ opacity: 0, y: -10 }}
+                  transition={{ duration: 0.2 }}
+                  className="absolute top-[85px] left-0 w-full px-2 sm:px-0"
+                >
+                  <div className="w-full bg-white p-3 rounded-xl shadow-xl border border-gray-100">
+                    <div className="relative w-full">
+                      <FiSearch className="absolute left-3 top-3 text-gray-400" />
+                      <input
+                        type="text"
+                        placeholder="Search groceries..."
+                        className="w-full pl-10 pr-4 py-2.5 rounded-lg text-sm bg-gray-50 border border-gray-200 focus:outline-none focus:ring-2 focus:ring-green-500"
+                      />
+                    </div>
                   </div>
-                </div>
-              </motion.div>
-            )}
-          </AnimatePresence>
-        </div>
+                </motion.div>
+              )}
+            </AnimatePresence>
+          </div>
+        )}
 
-        {/* CART */}
-        <Link
-          href="/cart"
-          className="relative p-2 rounded-lg transition-all duration-300 hover:bg-white/15 hover:scale-110 active:scale-95"
-        >
-          <FiShoppingCart className="text-white text-xl" />
-          <span className="absolute -top-1 -right-1 bg-red-500 text-white text-[10px] font-bold px-1.5 py-0.5 rounded-full">
-            0
-          </span>
-        </Link>
+        {/* CART - SHUDHU 'user' ER JONNE */}
+        {user?.role === "user" && (
+          <Link
+            href="/cart"
+            className="relative p-2 rounded-lg transition-all duration-300 hover:bg-white/15 hover:scale-110 active:scale-95"
+          >
+            <FiShoppingCart className="text-white text-xl" />
+            <span className="absolute -top-1 -right-1 bg-red-500 text-white text-[10px] font-bold px-1.5 py-0.5 rounded-full">
+              0
+            </span>
+          </Link>
+        )}
 
         {/* PROFILE W/ DROPDOWN */}
         <div className="relative" ref={profileRef}>
@@ -127,13 +187,17 @@ const Navbar = ({ user }: { user: IUser }) => {
             onClick={() => setIsProfileOpen(!isProfileOpen)}
             className="flex items-center gap-2 cursor-pointer group"
           >
-            <div className="w-8 h-8 rounded-full overflow-hidden border border-white/30 transition-all duration-300 group-hover:scale-110 group-hover:border-white">
+            <div className="w-8 h-8 rounded-full overflow-hidden border border-white/30 transition-all duration-300 group-hover:scale-110 group-hover:border-white bg-white/10 flex items-center justify-center shadow-inner">
               {user?.image ? (
-                <Image src={user.image} width={32} height={32} alt="user" />
+                <Image
+                  src={user.image}
+                  width={32}
+                  height={32}
+                  alt="user"
+                  className="w-full h-full object-cover"
+                />
               ) : (
-                <div className="w-full h-full bg-white/20 flex items-center justify-center">
-                  <LuUserRound className="text-white" />
-                </div>
+                <LuUserRound className="text-white" />
               )}
             </div>
 
@@ -154,13 +218,14 @@ const Navbar = ({ user }: { user: IUser }) => {
                 className="absolute right-0 mt-4 w-56 bg-white rounded-xl shadow-[0_10px_40px_rgba(0,0,0,0.1)] border border-gray-100 overflow-hidden"
               >
                 <div className="flex items-center gap-3 p-4 border-b border-gray-100 bg-gray-50/50">
-                  <div className="w-10 h-10 rounded-full overflow-hidden bg-gray-200 flex-shrink-0">
+                  <div className="w-10 h-10 rounded-full overflow-hidden bg-gray-200 flex-shrink-0 flex items-center justify-center">
                     {user?.image ? (
                       <Image
                         src={user.image}
                         width={40}
                         height={40}
                         alt="user"
+                        className="w-full h-full object-cover"
                       />
                     ) : (
                       <div className="w-full h-full flex items-center justify-center bg-green-100 text-green-600">
@@ -179,17 +244,79 @@ const Navbar = ({ user }: { user: IUser }) => {
                 </div>
 
                 <div className="p-2 flex flex-col gap-1">
-                  <Link
-                    href="/my-orders"
-                    className="flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium text-gray-600 transition-all duration-300 hover:bg-green-50 hover:text-green-700 group"
-                  >
-                    <FiBox className="text-lg text-gray-400 group-hover:text-green-600 transition-colors" />
-                    My Orders
-                  </Link>
+                  {/* === ADMIN DROPDOWN LINKS === */}
+                  {user?.role === "admin" && (
+                    <>
+                      <Link
+                        href="/admin/dashboard"
+                        className="flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium text-gray-600 transition-all duration-300 hover:bg-blue-50 hover:text-blue-700 group"
+                      >
+                        <FiGrid className="text-lg text-gray-400 group-hover:text-blue-600 transition-colors" />
+                        Dashboard
+                      </Link>
 
+                      {/* Eigula shudhu mobile e dekhabe karon desktop e middle navbar e ache */}
+                      <Link
+                        href="/admin/add-product"
+                        className="flex md:hidden items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium text-gray-600 transition-all duration-300 hover:bg-blue-50 hover:text-blue-700 group"
+                      >
+                        <FiPlusCircle className="text-lg text-gray-400 group-hover:text-blue-600 transition-colors" />
+                        Add Grocery
+                      </Link>
+                      <Link
+                        href="/admin/orders"
+                        className="flex md:hidden items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium text-gray-600 transition-all duration-300 hover:bg-blue-50 hover:text-blue-700 group"
+                      >
+                        <FiList className="text-lg text-gray-400 group-hover:text-blue-600 transition-colors" />
+                        Manage Orders
+                      </Link>
+                    </>
+                  )}
+
+                  {/* === DELIVERY BOY DROPDOWN LINKS === */}
+                  {user?.role === "deliveryBoy" && (
+                    <>
+                      <Link
+                        href="/delivery/dashboard"
+                        className="flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium text-gray-600 transition-all duration-300 hover:bg-yellow-50 hover:text-yellow-700 group"
+                      >
+                        <FiGrid className="text-lg text-gray-400 group-hover:text-yellow-600 transition-colors" />
+                        Dashboard
+                      </Link>
+
+                      {/* Eigula shudhu mobile e dekhabe */}
+                      <Link
+                        href="/delivery/requests"
+                        className="flex md:hidden items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium text-gray-600 transition-all duration-300 hover:bg-yellow-50 hover:text-yellow-700 group"
+                      >
+                        <FiBell className="text-lg text-gray-400 group-hover:text-yellow-600 transition-colors" />
+                        New Requests
+                      </Link>
+                      <Link
+                        href="/delivery/history"
+                        className="flex md:hidden items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium text-gray-600 transition-all duration-300 hover:bg-yellow-50 hover:text-yellow-700 group"
+                      >
+                        <FiClock className="text-lg text-gray-400 group-hover:text-yellow-600 transition-colors" />
+                        History
+                      </Link>
+                    </>
+                  )}
+
+                  {/* === USER DROPDOWN LINKS === */}
+                  {user?.role === "user" && (
+                    <Link
+                      href="/my-orders"
+                      className="flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium text-gray-600 transition-all duration-300 hover:bg-green-50 hover:text-green-700 group"
+                    >
+                      <FiBox className="text-lg text-gray-400 group-hover:text-green-600 transition-colors" />
+                      My Orders
+                    </Link>
+                  )}
+
+                  {/* LOGOUT BUTTON */}
                   <button
                     onClick={() => signOut()}
-                    className="flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium text-gray-600 transition-all duration-300 hover:bg-red-50 hover:text-red-600 group w-full text-left"
+                    className="flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium text-gray-600 transition-all duration-300 hover:bg-red-50 hover:text-red-600 group w-full text-left mt-1 border-t border-gray-50"
                   >
                     <FiLogOut className="text-lg text-gray-400 group-hover:text-red-500 transition-colors" />
                     Logout
