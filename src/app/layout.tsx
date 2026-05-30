@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import "./globals.css";
 import Provider from "@/Provider";
+import StoreProvider from "@/redux/StoreProvider";
 
 export const metadata: Metadata = {
   title: "Grocio ",
@@ -15,7 +16,9 @@ export default function RootLayout({
   return (
     <html lang="en">
       <body className="w-full min-h-[200vh] flex flex-col bg-linear-to-b from-[#0BA360]/10 to-[#3CBA92]/30">
-        <Provider>{children}</Provider>
+        <Provider>
+          <StoreProvider>{children}</StoreProvider>
+        </Provider>
       </body>
     </html>
   );
