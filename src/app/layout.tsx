@@ -14,7 +14,7 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="en">
-      <body className="w-full min-h-screen flex flex-col bg-linear-to-b from-[#0BA360]/10 to-[#3CBA92]/30">
+      <body className="w-full min-h-[200vh] flex flex-col bg-linear-to-b from-[#0BA360]/10 to-[#3CBA92]/30">
         <Provider>{children}</Provider>
       </body>
     </html>
