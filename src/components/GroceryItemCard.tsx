@@ -1,12 +1,20 @@
 "use client";
 
-import { motion } from "framer-motion";
+import {
+  addToCart,
+  decreaseQuantity,
+  increaseQuantity,
+} from "@/redux/cartSlice";
+import { AppDispatch, RootState } from "@/redux/store";
+import { AnimatePresence, motion } from "framer-motion";
+import mongoose from "mongoose";
 import Image from "next/image";
-import { IoMdCart } from "react-icons/io";
-
+import { FaMinus, FaPlus } from "react-icons/fa";
+import { FiShoppingCart } from "react-icons/fi";
+import { useDispatch, useSelector } from "react-redux";
 
 interface IGrocery {
-  _id?: string;
+  _id: mongoose.Types.ObjectId;
   name: string;
   category: string;
   price: string;
@@ -16,72 +24,115 @@ interface IGrocery {
   updatedAt?: string | Date;
 }
 
+interface ICartItem extends IGrocery {
+  quantity: number;
+}
+
 const GroceryItemCard = ({ item }: { item: IGrocery }) => {
+  const dispatch = useDispatch<AppDispatch>();
+
+  const { cartData } = useSelector((state: RootState) => state.cart);
+  const cartItem = cartData.find((i) => i._id === item._id) as ICartItem;
   return (
     <motion.div
-      initial={{ opacity: 0, y: 30, scale: 0.95 }}
-      whileInView={{ opacity: 1, y: 0, scale: 1 }}
-      transition={{ duration: 0.5, ease: "easeOut" }}
-      viewport={{ once: false, amount: 0.3 }} 
-      className="bg-white rounded-2xl shadow-sm hover:shadow-xl transition-all duration-300 border border-gray-100 flex flex-col group overflow-hidden"
+      initial={{ opacity: 0, y: 15 }}
+      whileInView={{ opacity: 1, y: 0 }}
+      transition={{ duration: 0.3 }}
+      viewport={{ once: false, amount: 0.5 }}
+      className="bg-white rounded-2xl border border-gray-100 shadow-sm hover:shadow-lg hover:-translate-y-1 transition-all duration-300 overflow-hidden p-3 group flex flex-col h-full"
     >
-      {/* IMAGE SECTION */}
-      <div className="relative w-full aspect-[4/3] bg-gray-50 overflow-hidden flex items-center justify-center">
+      {/* Product Image */}
+      <div className="relative w-full h-[180px] rounded-xl bg-gray-50 overflow-hidden mb-3">
+        <div className="absolute top-2 left-2 z-10">
+          <span className="bg-green-600 text-white text-[10px] font-medium px-2 py-1 rounded-full">
+            Fresh
+          </span>
+        </div>
+
         {item.image ? (
           <Image
             src={item.image}
             fill
             alt={item.name}
-            className="object-contain p-4 group-hover:scale-110 transition-transform duration-500 ease-in-out"
-            sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
+            className="object-contain p-2 transition-transform duration-300 group-hover:scale-105"
+            sizes="(max-width:768px) 100vw, (max-width:1200px) 50vw, 33vw"
           />
         ) : (
-          <div className="text-gray-300 text-sm">No Image</div>
+          <div className="w-full h-full flex items-center justify-center text-gray-300 text-sm">
+            No Image
+          </div>
         )}
-
-        {/* Category Badge Floating on Image */}
-        <div className="absolute top-3 left-3 bg-white/90 backdrop-blur-sm px-2.5 py-1 rounded-lg shadow-sm border border-gray-100">
-          <span className="text-[10px] md:text-xs font-bold text-green-600 uppercase tracking-wider">
-            {item.category}
-          </span>
-        </div>
       </div>
 
-      {/* DETAILS SECTION */}
-      <div className="p-4 md:p-5 flex flex-col flex-grow bg-white">
+      {/* Product Details */}
+      <div className="flex flex-col flex-grow">
+        {/* Category */}
+        <span className="text-green-600 text-[10px] font-semibold uppercase tracking-wide mb-1">
+          {item.category}
+        </span>
+
         {/* Product Name */}
-        <h3 className="text-gray-800 font-bold text-base md:text-lg line-clamp-2 leading-snug mb-1 group-hover:text-green-600 transition-colors">
+        <h3 className="text-sm md:text-base font-bold text-gray-900 leading-snug line-clamp-2 min-h-[40px]">
           {item.name}
         </h3>
 
-        {/* Unit Info */}
-        <div className="text-xs md:text-sm font-medium mb-4 flex justify-between">
-          <p className="bg-gray-100 rounded-full px-2 py-1 text-gray-700">
-            {item.unit}
+        {/* Price & Unit */}
+        <div className="flex items-center justify-between mt-3 mb-4">
+          <p className="text-lg md:text-xl font-bold text-green-600">
+            ৳{item.price}
           </p>
-          <p className="text-green-700 text-lg font-bold">৳ {item.price}</p>
+
+          <span className="bg-green-50 text-green-700 text-xs font-medium px-3 py-1 rounded-full">
+            {item.unit === "piece" ? "1 piece" : item.unit}
+          </span>
         </div>
 
-        {/* Price & Add to Cart Button (Pushed to bottom using mt-auto) */}
-        <div className="mt-auto flex items-center justify-between">
-          {/* <div className="flex flex-col"> */}
-          {/* <span className="text-xs text-gray-400 font-medium line-through mb-0.5"> */}
-          {/* Optional: You can add fake original price here if you want discounts */}
-          {/* ৳{(Number(item.price) * 1.2).toFixed(2)} */}
-          {/* </span> */}
-          {/* <span className="text-lg md:text-xl font-extrabold text-gray-900"> */}
-          {/* ৳{item.price} */}
-          {/* </span> */}
-          {/* </div> */}
+        {/* Cart Controls */}
+        <div className="mt-auto h-[44px]">
+          <AnimatePresence mode="wait">
+            {cartItem ? (
+              <motion.div
+                key="quantity"
+                initial={{ opacity: 0, scale: 0.95 }}
+                animate={{ opacity: 1, scale: 1 }}
+                exit={{ opacity: 0, scale: 0.95 }}
+                transition={{ duration: 0.15 }}
+                className=" w-full h-full bg-green-600 text-white rounded-xl flex items-center justify-between px-3 "
+              >
+                <button
+                  onClick={() => dispatch(decreaseQuantity(item._id))}
+                  className=" w-8 h-8 rounded-full bg-white/10 hover:bg-white/20 flex items-center justify-center transition-all "
+                >
+                  <FaMinus size={10} />
+                </button>
 
-          <motion.button
-            whileHover={{ scale: 1.05 }}
-            whileTap={{ scale: 0.95 }}
-            className="bg-green-100 hover:bg-green-600 text-green-600 hover:text-white p-2.5 md:p-3 rounded-xl transition-colors duration-300 shadow-sm w-full text-sm font-bold cursor-pointer flex items-center gap-2 justify-center "
-            aria-label="Add to cart"
-          >
-            <IoMdCart /> Add to Cart
-          </motion.button>
+                <span className="font-semibold">{cartItem.quantity}</span>
+
+                <button
+                  onClick={() => dispatch(increaseQuantity(item._id))}
+                  className=" w-8 h-8 rounded-full bg-white/10 hover:bg-white/20 flex items-center justify-center transition-all"
+                >
+                  <FaPlus size={10} />
+                </button>
+              </motion.div>
+            ) : (
+              <motion.button
+                key="add"
+                initial={{ opacity: 0, scale: 0.95 }}
+                animate={{ opacity: 1, scale: 1 }}
+                exit={{ opacity: 0, scale: 0.95 }}
+                transition={{ duration: 0.15 }}
+                onClick={() =>
+                  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+                  dispatch(addToCart({ ...item, quantity: 1 } as any))
+                }
+                className=" w-full h-full bg-green-600 cursor-pointer hover:bg-green-700 text-white text-sm font-semibold rounded-xl flex items-center justify-center gap-2 transition-all"
+              >
+                <FiShoppingCart className="text-base" />
+                Add to Cart
+              </motion.button>
+            )}
+          </AnimatePresence>
         </div>
       </div>
     </motion.div>

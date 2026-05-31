@@ -11,7 +11,6 @@ import {
   FiLogOut,
   FiBox,
   FiGrid,
-  FiTruck,
   FiPlusCircle,
   FiList,
   FiBell,
@@ -21,6 +20,8 @@ import {
 } from "react-icons/fi";
 import { LuBoxes, LuUserRound } from "react-icons/lu";
 import logo from "@/assets/nav-logo.png";
+import { useSelector } from "react-redux";
+import { RootState } from "@/redux/store";
 
 interface IUser {
   _id?: any;
@@ -38,6 +39,8 @@ const Navbar = ({ user }: { user: IUser }) => {
   const profileRef = useRef<HTMLDivElement>(null);
   const searchRef = useRef<HTMLDivElement>(null);
   const sidebarRef = useRef<HTMLDivElement>(null);
+
+  const {cartData} = useSelector((state:RootState)=>state.cart)
 
   useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {
@@ -346,8 +349,11 @@ const Navbar = ({ user }: { user: IUser }) => {
               className="relative p-2 rounded-lg transition-all duration-300 hover:bg-white/15 hover:scale-110 active:scale-95"
             >
               <FiShoppingCart className="text-white text-xl" />
-              <span className="absolute -top-1 -right-1 bg-red-500 text-white text-[10px] font-bold px-1.5 py-0.5 rounded-full">
-                0
+              
+             
+
+              <span className={`${cartData.length===0? "hidden" : ""} absolute -top-1 -right-1 bg-red-500 text-white text-[10px] font-bold px-1.5 py-0.5 rounded-full`}>
+                {cartData.length}
               </span>
             </Link>
           )}
