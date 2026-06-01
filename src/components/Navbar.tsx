@@ -345,7 +345,7 @@ const Navbar = ({ user }: { user: IUser }) => {
           {/* USER: CART ICON */}
           {user?.role === "user" && (
             <Link
-              href="/cart"
+              href="/user/cart"
               className="relative p-2 rounded-lg transition-all duration-300 hover:bg-white/15 hover:scale-110 active:scale-95"
             >
               <FiShoppingCart className="text-white text-xl" />
