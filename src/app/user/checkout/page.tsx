@@ -1,3 +1,8 @@
+/* eslint-disable react-hooks/static-components */
+/* eslint-disable react-hooks/exhaustive-deps */
+/* eslint-disable @typescript-eslint/no-require-imports */
+/* eslint-disable react-hooks/set-state-in-effect */
+/* eslint-disable react-hooks/immutability */
 "use client";
 
 import { RootState } from "@/redux/store";
@@ -14,7 +19,6 @@ import {
   FiMap,
   FiCheckCircle,
 } from "react-icons/fi";
-import { LuNavigation } from "react-icons/lu";
 import { useSelector } from "react-redux";
 import "leaflet/dist/leaflet.css";
 
@@ -23,11 +27,12 @@ import { MapContainer, Marker, TileLayer, useMap } from "react-leaflet";
 import { TbCurrentLocation } from "react-icons/tb";
 import { ImCreditCard } from "react-icons/im";
 import { FaTruckMoving } from "react-icons/fa6";
+import axios from "axios";
 
 const CheckoutPage = () => {
   const router = useRouter();
   const { userData } = useSelector((state: RootState) => state.user);
-  const { subTotal, deliveryFee, total } = useSelector(
+  const { subTotal, deliveryFee, total,cartData } = useSelector(
     (state: RootState) => state.cart,
   );
 
@@ -240,21 +245,55 @@ const CheckoutPage = () => {
     ) : null;
   };
 
-  // Checkout Handler (Stripe/COD logic here)
-  const handleCheckout = () => {
-    if (!address.fullAddress) {
+    // Checkout Handler (Stripe/COD logic here)
+    // cash on delivery
+  const handleCod = async() => {
+    if (!address.fullAddress || !markerPosition) {
       alert("Please map your delivery location first!");
       return;
-    }
+      }
+      try {
+          const result = await axios.post("/api/user/order", {
+            userId: userData?._id,
+            items: cartData.map((item) => ({
+              grocery: item._id,
+              name: item.name,
+              price: item.price,
+              unit: item.unit,
+              image: item.image,
+              quantity: item.quantity,
+            })),
+            totalAmount: total,
+            address: {
+              fullName: address.fullName,
+              mobile: address.mobile,
+              city: address.city,
+              state: address.state,
+              postalCode: address.postalCode,
+              fullAddress: address.fullAddress,
+              latitude: markerPosition[0],
+              longitude: markerPosition[1]
+              },
+            paymentMethod,
+          });
+          console.log(result.data)
+          router.push("/user/order-success")
+      } catch (error) {
+        console.log(error)
+      }
 
-    if (paymentMethod === "cod") {
-      console.log("Order Placed using COD", { address, total });
-      // ekhane tor backend e COD er order create korar API call hobe
-    } else {
-      console.log("Redirecting to Stripe", { address, total });
-      // ekhane tor Stripe er checkout session API call hobe
-    }
-  };
+
+    };
+    // console.log(markerPosition)
+
+    // online payment
+    
+    const handleOnlineOrder = () => {
+            if (!address.fullAddress) {
+              alert("Please map your delivery location first!");
+              return;
+            }      
+          };
 
   const inputClass =
     "w-full border-b-2 border-gray-100 bg-transparent py-2.5 text-sm text-gray-800 placeholder-gray-400 focus:border-[#00a850] focus:outline-none transition-colors";
@@ -611,7 +650,13 @@ const CheckoutPage = () => {
               </div>
 
               <button
-                onClick={handleCheckout}
+                              onClick={() => {
+                                  if (paymentMethod == "cod") {
+                                      handleCod()
+                                  } else {
+                                      handleOnlineOrder()
+                                  }
+                }}
                 className="w-full bg-[#00a850] hover:bg-green-700 text-white text-sm font-bold py-4 rounded-xl transition-all shadow-[0_4px_14px_rgba(0,168,80,0.3)] hover:shadow-[0_6px_20px_rgba(0,168,80,0.4)] active:scale-[0.98] flex items-center justify-center gap-2 uppercase tracking-wide"
               >
                 {paymentMethod === "cod" ? "Place Order" : "Proceed to Payment"}

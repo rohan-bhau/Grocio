@@ -13,7 +13,7 @@ interface IOrder {
       quantity: number;
     },
   ];
-  totalAmount: string;
+  totalAmount: number;
   paymentMethod: "cod" | "online";
   address: {
     fullName: string;
@@ -21,7 +21,7 @@ interface IOrder {
     city: string;
     state: string;
     postalCode: string;
-    completeAddress: string;
+    fullAddress: string;
     latitude: number;
     longitude: number;
   };
@@ -52,7 +52,7 @@ const orderSchema = new mongoose.Schema<IOrder>(
       },
     ],
     totalAmount: {
-      type: String,
+      type: Number,
     },
     paymentMethod: {
       type: String,
@@ -65,7 +65,7 @@ const orderSchema = new mongoose.Schema<IOrder>(
       city: String,
       state: String,
       postalCode: String,
-      completeAddress: String,
+      fullAddress: String,
       latitude: Number,
       longitude: Number,
     },
