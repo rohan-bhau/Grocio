@@ -447,7 +447,7 @@ const Navbar = ({ user }: { user: IUser }) => {
                     )}
                     {user?.role === "user" && (
                       <Link
-                        href="/my-orders"
+                        href="/user/my-orders"
                         className="flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium text-gray-600 hover:bg-green-50 hover:text-green-700 transition-all"
                       >
                         <FiBox className="text-lg text-gray-400" /> My Orders
