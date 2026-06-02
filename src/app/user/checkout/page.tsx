@@ -288,11 +288,41 @@ const CheckoutPage = () => {
 
     // online payment
     
-    const handleOnlineOrder = () => {
-            if (!address.fullAddress) {
+    const handleOnlineOrder = async() => {
+            if (!address.fullAddress || !markerPosition) {
               alert("Please map your delivery location first!");
               return;
-            }      
+            }    
+        
+        try {
+            const result = await axios.post("/api/user/payment", {
+              userId: userData?._id,
+              items: cartData.map((item) => ({
+                grocery: item._id,
+                name: item.name,
+                price: item.price,
+                unit: item.unit,
+                image: item.image,
+                quantity: item.quantity,
+              })),
+              totalAmount: total,
+              address: {
+                fullName: address.fullName,
+                mobile: address.mobile,
+                city: address.city,
+                state: address.state,
+                postalCode: address.postalCode,
+                fullAddress: address.fullAddress,
+                latitude: markerPosition[0],
+                longitude: markerPosition[1],
+              },
+                paymentMethod,
+            });
+            window.location.href=result.data.url
+        } catch (error) {
+            console.log(error)
+        }
+
           };
 
   const inputClass =
