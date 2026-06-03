@@ -11,6 +11,7 @@ import { FaTruck, FaArrowLeft } from "react-icons/fa";
 import { FiMapPin, FiUser, FiPhone } from "react-icons/fi";
 import { IoIosArrowDown } from "react-icons/io";
 import { useRouter } from "next/navigation";
+import { getSocket } from "@/lib/socket";
 
 // --- Admin Order Card Component ---
 const AdminOrderCard = ({
@@ -249,7 +250,16 @@ const ManageOrdersPage = () => {
     } finally {
       setLoading(false);
     }
-  };
+    };
+    
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    useEffect(():any => {
+        const socket = getSocket()
+        socket?.on("new-order", (newOrder) => {
+       setOrders((prev)=>[newOrder, ...prev])
+        })   
+    return ()=>socket.off("new-order")    
+    },[])
 
   const handleStatusChange = async (
     orderId: string,

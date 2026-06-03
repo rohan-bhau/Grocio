@@ -8,6 +8,7 @@ import { FaArrowLeft } from "react-icons/fa";
 import { BsBoxSeam } from "react-icons/bs";
 import { motion } from "framer-motion";
 import UserOrderCard from "@/components/UserOrderCard";
+import { getSocket } from "@/lib/socket";
 
 const MyOrdersPage = () => {
   const router = useRouter();
@@ -29,10 +30,24 @@ const MyOrdersPage = () => {
     getMyOrders();
   }, []);
 
+  useEffect(() => {
+    const socket = getSocket();
+
+    socket?.on("order-status-update", (data) => {
+      setOrders((prev) =>
+        prev.map((order) =>
+          order._id?.toString() == data.orderId.toString()
+            ? { ...order, status: data.status }
+            : order,
+        ),
+      );
+    });
+    return () => socket.off("order-status-update");
+  }, []);
+
   return (
     <div className="bg-gray-50/50 min-h-screen w-full">
       <div className="max-w-3xl mx-auto px-4 pt-20 pb-12 relative">
-        
         {/* Fixed Header */}
         <div className="fixed top-0 left-0 w-full backdrop-blur-xl bg-white/80 shadow-[0_2px_10px_rgba(0,0,0,0.02)] border-b border-gray-100 z-50">
           <div className="max-w-3xl mx-auto flex items-center gap-4 px-4 py-4">
@@ -68,8 +83,7 @@ const MyOrdersPage = () => {
             ))}
           </div>
         ) : orders?.length === 0 ? (
-          
-          <motion.div 
+          <motion.div
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.5 }}
@@ -82,7 +96,8 @@ const MyOrdersPage = () => {
               No Orders Yet
             </h2>
             <p className="text-gray-500 text-sm md:text-base max-w-xs mb-8 leading-relaxed">
-              Looks like you haven't made your first order yet. Start exploring our fresh groceries!
+              Looks like you haven&apos;t made your first order yet. Start
+              exploring our fresh groceries!
             </p>
             <button
               onClick={() => router.push("/")}
@@ -92,12 +107,10 @@ const MyOrdersPage = () => {
             </button>
           </motion.div>
         ) : (
-          
-
           <div className="mt-2 space-y-4 md:space-y-6">
             {orders?.map((order, idx) => (
               <motion.div
-                key={idx}
+                key={order._id?.toString() ?? idx}
                 initial={{ opacity: 0, y: 20 }}
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ duration: 0.4, delay: idx * 0.1 }} // Staggered animation

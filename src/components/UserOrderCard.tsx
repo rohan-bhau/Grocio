@@ -1,16 +1,18 @@
 "use client";
 
+import { getSocket } from "@/lib/socket";
 import { IOrder } from "@/models/order.model";
 import { motion, AnimatePresence } from "framer-motion";
 import Image from "next/image";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { BiCreditCard, BiPackage } from "react-icons/bi";
 import { FaTruck } from "react-icons/fa";
 import { FiMapPin, FiUser, FiPhone } from "react-icons/fi";
 import { IoIosArrowDown } from "react-icons/io";
 
 const UserOrderCard = ({ order }: { order: IOrder }) => {
-  const [expanded, setExpanded] = useState(false);
+    const [expanded, setExpanded] = useState(false);
+    const [status, setStatus] = useState(order.status)
 
   // Soft, elegant badge styles using Tailwind's ring utility
   const getStatusStyle = (status: string) => {
@@ -35,6 +37,17 @@ const UserOrderCard = ({ order }: { order: IOrder }) => {
     hour: "2-digit",
     minute: "2-digit",
   });
+    
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    useEffect(():any => {
+        const socket = getSocket()
+        socket.on("order-status-update", (data) => {
+            if (data.orderId.toString() == order?._id!.toString()) {
+                setStatus(data.status)
+            }
+        });
+      return () => socket.off("order-status-update");
+    },[])
 
   return (
     <motion.div
@@ -67,10 +80,10 @@ const UserOrderCard = ({ order }: { order: IOrder }) => {
           </span>
           <span
             className={`px-3 py-1 text-[11px] font-bold uppercase tracking-wider rounded-full ${getStatusStyle(
-              order.status,
+              status,
             )}`}
           >
-            {order.status}
+            {status}
           </span>
         </div>
       </div>

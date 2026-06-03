@@ -1,4 +1,5 @@
 import connectDb from "@/lib/db";
+import emitEventHandlers from "@/lib/emitEventHandlers";
 import Order from "@/models/order.model";
 import User from "@/models/user.model";
 import { NextRequest, NextResponse } from "next/server";
@@ -29,6 +30,9 @@ export async function POST(req:NextRequest) {
             totalAmount,
             address
         })
+
+
+        await emitEventHandlers("new-order", newOrder)
 
         return NextResponse.json(
           newOrder,
