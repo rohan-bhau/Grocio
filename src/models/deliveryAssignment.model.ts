@@ -40,4 +40,4 @@ const deliveryAssignmentSchema = new mongoose.Schema<IDeliveryAssignment>(
 ); 
 
 
-const DeliveryAssignment = mongoose.models.DeliveryAssignment || mongoose.model.("DeliveryAssignment", deliveryAssignmentSchema)
+const DeliveryAssignment = mongoose.models.DeliveryAssignment || mongoose.model("DeliveryAssignment", deliveryAssignmentSchema);
