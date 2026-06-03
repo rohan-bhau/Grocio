@@ -11,9 +11,7 @@ import {
 } from "react-icons/fi";
 import { motion, AnimatePresence } from "framer-motion";
 import Image from "next/image";
-import { getSocket } from "@/lib/socket";
-import { useSelector } from "react-redux";
-import { RootState } from "@/redux/store";
+
 
 
 const slides = [
@@ -65,16 +63,6 @@ const slides = [
 
 const HeroSection = () => {
   const [current, setCurrent] = useState(0);
-  const {userData}=useSelector((state:RootState)=>state.user)
-
-  useEffect(() => {
-    if (userData) {
-      
-      // eslint-disable-next-line prefer-const
-      let socket = getSocket() 
-      socket.emit("identity",userData?._id )
-    }
-  },[userData])
  
   useEffect(() => {
     const timer = setInterval(() => {
