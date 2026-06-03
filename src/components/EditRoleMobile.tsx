@@ -3,7 +3,7 @@ import axios from "axios";
 import { motion } from "motion/react";
 import { useSession } from "next-auth/react";
 import { useRouter } from "next/navigation";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { FaArrowRight } from "react-icons/fa";
 import { LuUserCog, LuUserRound } from "react-icons/lu";
 import { MdDeliveryDining } from "react-icons/md";
@@ -11,11 +11,11 @@ import { MdDeliveryDining } from "react-icons/md";
 const EditRoleMobile = () => {
   const router = useRouter();
 
-  const roles = [
+  const [roles, setRoles] = useState([
     { id: "admin", label: "Admin", icon: LuUserCog },
     { id: "user", label: "User", icon: LuUserRound },
     { id: "deliveryBoy", label: "Delivery Boy", icon: MdDeliveryDining },
-  ];
+  ]);
 
   const [selectedRole, setSelectedRole] = useState("");
   const [mobile, setMobile] = useState("");
@@ -40,6 +40,25 @@ const EditRoleMobile = () => {
       setLoading(false);
     }
   };
+
+
+  useEffect(() => {
+    const checkForAdmin = async () => {
+      try {
+        const result = await axios.get("/api/check-for-admin");
+        console.log(result);
+
+        if (result.data.adminExist) {
+          setRoles(prev=>prev.filter(r=>r.id!=="admin"))
+        }
+
+      } catch (error) {
+        console.log(error);
+      }
+    };
+    checkForAdmin()
+  },[])
+
 
   return (
     <div className="min-h-screen bg-green-50 px-6 flex flex-col items-center justify-center">
