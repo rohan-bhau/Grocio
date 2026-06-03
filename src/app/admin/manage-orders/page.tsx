@@ -23,8 +23,8 @@ const AdminOrderCard = ({
     newStatus: IOrder["status"],
   ) => Promise<void>;
 }) => {
-  const [expanded, setExpanded] = useState(false);
-  const [isUpdating, setIsUpdating] = useState(false);
+    const [expanded, setExpanded] = useState(false);
+    const [status, setStatus] = useState<string>(order.status)
 
   const formattedDate = new Date(order.createdAt!).toLocaleDateString("en-US", {
     day: "numeric",
@@ -34,15 +34,15 @@ const AdminOrderCard = ({
     minute: "2-digit",
   });
 
-  const handleStatusUpdate = async (
-    e: React.ChangeEvent<HTMLSelectElement>,
-  ) => {
-    const newStatus = e.target.value as IOrder["status"];
-    setIsUpdating(true);
-    // Call the parent function to handle API update
-    await onStatusChange(order._id as string, newStatus);
-    setIsUpdating(false);
-  };
+    const handleStatusUpdate = async (orderId:string, status:string) => {
+      try {
+          const result = await axios.post(`/api/admin/update-order-status/${orderId}`,{status})
+          console.log(result.data)
+          setStatus(status)
+      } catch (error) {
+        console.log(error)
+      }
+  }
 
   return (
     <motion.div
@@ -76,17 +76,14 @@ const AdminOrderCard = ({
           {/* Admin Status Dropdown */}
           <div className="relative">
             <select
-              value={order.status.toLowerCase()}
-              onChange={handleStatusUpdate}
-              disabled={isUpdating}
-              className={`appearance-none outline-none text-xs font-bold uppercase tracking-wider px-4 py-1.5 pr-8 rounded-lg cursor-pointer transition-all ring-1 ring-inset focus:ring-2 ${
-                isUpdating ? "opacity-50 cursor-not-allowed" : ""
-              } ${
-                order.status.toLowerCase() === "pending"
+              value={status.toLowerCase()}
+              onChange={(e) => handleStatusUpdate(order._id?.toString(), e.target.value)}
+              className={`appearance-none outline-none text-xs font-bold uppercase tracking-wider px-4 py-1.5 pr-8 rounded-lg cursor-pointer transition-all ring-1 ring-inset focus:ring-2  ${
+              status.toLowerCase() === "pending"
                   ? "bg-amber-50 text-amber-600 ring-amber-500/30 focus:ring-amber-500"
-                  : order.status.toLowerCase() === "out for delivery"
+                  : status.toLowerCase() === "out for delivery"
                     ? "bg-blue-50 text-blue-600 ring-blue-500/30 focus:ring-blue-500"
-                    : order.status.toLowerCase() === "delivered"
+                    : status.toLowerCase() === "delivered"
                       ? "bg-green-50 text-green-600 ring-green-500/30 focus:ring-green-500"
                       : "bg-red-50 text-red-600 ring-red-500/30 focus:ring-red-500"
               }`}
@@ -97,9 +94,7 @@ const AdminOrderCard = ({
             <div className="pointer-events-none absolute inset-y-0 right-0 flex items-center px-2 text-current opacity-70">
               <IoIosArrowDown size={14} />
             </div>
-                  </div>
-                  
-
+          </div>
         </div>
       </div>
 
