@@ -46,13 +46,13 @@ const UserOrderCard = ({ order }: { order: IOrder }) => {
       {/* Top Header Section */}
       <div className="px-6 py-5 border-b border-gray-100/60 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div className="space-y-1">
-          <h2 className="text-base font-semibold text-gray-900 flex items-center gap-2">
+          <h2 className="text-base font-bold text-gray-900 flex items-center gap-2">
             Order{" "}
-            <span className="text-gray-500 font-medium">
+            <span className="text-[#00a850] font-semibold">
               #{order?._id?.toString()?.slice(-8).toUpperCase()}
             </span>
           </h2>
-          <p className="text-sm text-gray-400">{formattedDate}</p>
+          <p className="text-sm text-gray-500 font-medium">{formattedDate}</p>
         </div>
 
         <div className="flex items-center gap-3">
@@ -80,21 +80,25 @@ const UserOrderCard = ({ order }: { order: IOrder }) => {
         <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
           {/* Shipping Details */}
           <div>
-            <h3 className="text-[11px] font-bold text-gray-400 uppercase tracking-widest mb-4">
+            <h3 className="text-[11px] font-bold text-gray-500 uppercase tracking-widest mb-4">
               Shipping Information
             </h3>
-            <div className="space-y-2.5 text-sm text-gray-700">
+            <div className="space-y-3 text-sm">
               <div className="flex items-center gap-3">
-                <FiUser className="text-gray-400 text-base" />
-                <span className="font-medium">{order.address.fullName}</span>
+                <FiUser className="text-gray-500 text-lg" />
+                <span className="font-semibold text-gray-800">
+                  {order.address.fullName}
+                </span>
               </div>
               <div className="flex items-center gap-3">
-                <FiPhone className="text-gray-400 text-base" />
-                <span>{order.address.mobile}</span>
+                <FiPhone className="text-gray-500 text-lg" />
+                <span className="font-medium text-gray-700">
+                  {order.address.mobile}
+                </span>
               </div>
               <div className="flex items-start gap-3">
-                <FiMapPin className="text-gray-400 text-base mt-0.5 shrink-0" />
-                <span className="leading-relaxed text-gray-600">
+                <FiMapPin className="text-gray-500 text-lg mt-0.5 shrink-0" />
+                <span className="leading-relaxed font-medium text-gray-600">
                   {order.address.fullAddress}
                 </span>
               </div>
@@ -103,29 +107,29 @@ const UserOrderCard = ({ order }: { order: IOrder }) => {
 
           {/* Payment & Summary */}
           <div>
-            <h3 className="text-[11px] font-bold text-gray-400 uppercase tracking-widest mb-4">
+            <h3 className="text-[11px] font-bold text-gray-500 uppercase tracking-widest mb-4">
               Payment & Summary
             </h3>
             <div className="space-y-4">
-              <div className="flex items-center gap-3 text-sm text-gray-700">
+              <div className="flex items-center gap-3 text-sm font-semibold text-gray-800">
                 {order.paymentMethod === "cod" ? (
                   <>
-                    <FaTruck className="text-gray-400 text-base" />
+                    <FaTruck className="text-gray-500 text-lg" />
                     <span>Cash On Delivery</span>
                   </>
                 ) : (
                   <>
-                    <BiCreditCard className="text-gray-400 text-base" />
+                    <BiCreditCard className="text-gray-500 text-lg" />
                     <span>Online Payment</span>
                   </>
                 )}
               </div>
 
-              <div className="bg-gray-50/50 rounded-xl p-4 border border-gray-100/50 flex justify-between items-center">
-                <span className="text-sm font-medium text-gray-500">
+              <div className="bg-gray-50/80 rounded-xl p-4 border border-gray-100 flex justify-between items-center">
+                <span className="text-sm font-semibold text-gray-600">
                   Total Amount
                 </span>
-                <span className="text-xl font-bold text-gray-900">
+                <span className="text-xl font-extrabold text-gray-900">
                   ৳ {order.totalAmount}
                 </span>
               </div>
@@ -139,8 +143,8 @@ const UserOrderCard = ({ order }: { order: IOrder }) => {
             onClick={() => setExpanded((prev) => !prev)}
             className="flex justify-between items-center w-full group outline-none"
           >
-            <div className="flex items-center gap-2 text-sm font-semibold text-gray-900 group-hover:text-[#00a850] transition-colors">
-              <BiPackage className="text-lg text-gray-400 group-hover:text-[#00a850] transition-colors" />
+            <div className="flex items-center gap-2 text-sm font-bold text-gray-800 group-hover:text-[#00a850] transition-colors">
+              <BiPackage className="text-xl text-gray-500 group-hover:text-[#00a850] transition-colors" />
               <span>
                 {order.items.length} Item{order.items.length > 1 ? "s" : ""} in
                 this order
@@ -149,7 +153,7 @@ const UserOrderCard = ({ order }: { order: IOrder }) => {
             <motion.div
               animate={{ rotate: expanded ? 180 : 0 }}
               transition={{ duration: 0.3 }}
-              className="w-8 h-8 rounded-full bg-gray-50 flex items-center justify-center text-gray-500 group-hover:bg-green-50 group-hover:text-[#00a850] transition-colors"
+              className="w-8 h-8 rounded-full bg-gray-50 border border-gray-100 flex items-center justify-center text-gray-600 group-hover:bg-green-50 group-hover:text-[#00a850] group-hover:border-green-100 transition-colors"
             >
               <IoIosArrowDown />
             </motion.div>
@@ -171,7 +175,7 @@ const UserOrderCard = ({ order }: { order: IOrder }) => {
                       className="flex justify-between items-center group"
                     >
                       <div className="flex items-center gap-4">
-                        <div className="relative w-12 h-12 bg-gray-50/80 rounded-lg overflow-hidden shrink-0 border border-gray-100/80">
+                        <div className="relative w-12 h-12 bg-gray-50/80 rounded-lg overflow-hidden shrink-0 border border-gray-100">
                           <Image
                             src={item.image}
                             fill
@@ -180,15 +184,15 @@ const UserOrderCard = ({ order }: { order: IOrder }) => {
                           />
                         </div>
                         <div>
-                          <p className="text-sm font-semibold text-gray-800">
+                          <p className="text-sm font-bold text-gray-800">
                             {item.name}
                           </p>
-                          <p className="text-xs text-gray-500 mt-0.5">
+                          <p className="text-xs font-medium text-gray-500 mt-0.5">
                             {item.quantity} x {item.unit}
                           </p>
                         </div>
                       </div>
-                      <div className="text-sm font-bold text-gray-900">
+                      <div className="text-sm font-extrabold text-gray-900">
                         ৳ {Number(item.price) * item.quantity}
                       </div>
                     </div>
