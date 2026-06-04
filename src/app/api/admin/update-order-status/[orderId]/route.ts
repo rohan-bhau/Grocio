@@ -1,4 +1,5 @@
 import connectDb from "@/lib/db";
+import emitEventHandlers from "@/lib/emitEventHandlers";
 import DeliveryAssignment from "@/models/deliveryAssignment.model";
 import Order from "@/models/order.model";
 import User from "@/models/user.model";
@@ -37,63 +38,100 @@ export async function POST(
           },
         },
       });
-        const nearByIds = nearByDeliveryBoys.map((b) => b._id)
-        
-        const busyIds = await DeliveryAssignment.find({
-          assignedTo: { $in: nearByIds },
-          status: { $nin: ["broadcasted" , "completed"] },
-        }).distinct("assignedTo")
 
-        const busyIdSet = new Set(busyIds.map(b => String(b)))
-        
-        const availableDeliveryBoys = nearByDeliveryBoys.filter(
-            b=>!busyIdSet.has(String(b._id))
-        )
+      const nearByIds = nearByDeliveryBoys.map((b) => b._id);
 
-        const candidates = availableDeliveryBoys.map(b => b._id)
-        if (candidates.length == 0) {
-            await order.save()
-            return NextResponse.json(
-                { message: "Delivery boy not found" },
-                { status: 200 }
-            )
-        }
+      const busyIds = await DeliveryAssignment.find({
+        assignedTo: { $in: nearByIds },
+        status: { $nin: ["broadcasted", "completed"] },
+      }).distinct("assignedTo");
 
+      const busyIdSet = new Set(busyIds.map((b) => String(b)));
 
-        const deliveryAssignment = await DeliveryAssignment.create({
-          order: order._id,
-          broadcastedTo: candidates,
-          status: "broadcasted",
-        });
-
-        order.assignment = deliveryAssignment._id
-        deliveryBoysPayload = availableDeliveryBoys.map(b => ({
-            id: b._id,
-            name: b.name,
-            mobile: b.mobile,
-            latitude: b.location.coordinates[1],
-            longitude: b.location.coordinates[0]
-        }))
-        await deliveryAssignment.populate("order")
-
-      }
-      
-      await order.save()
-      await order.populate("user")
-      return NextResponse.json(
-          {
-              assignment: order.assignment?._id,
-             availableBoys : deliveryBoysPayload
-         },{status:200}
-          
-      )
-
-  } catch (error) {
-      return NextResponse.json(
-        {
-         message: `update status error ${error}`
-        },
-        { status: 500 },
+      const availableDeliveryBoys = nearByDeliveryBoys.filter(
+        (b) => !busyIdSet.has(String(b._id)),
       );
+
+      const candidates = availableDeliveryBoys.map((b) => b._id);
+
+      if (candidates.length == 0) {
+        await order.save();
+
+        const orderOwner = order.user as any;
+        const userSocketId = orderOwner?.socketId;
+
+        await emitEventHandlers(
+          "order-status-update",
+          {
+            orderId: order._id.toString(), 
+            status: order.status,
+          },
+          userSocketId, 
+        );
+
+        return NextResponse.json(
+          { message: "Delivery boy not found" },
+          { status: 200 },
+        );
+      }
+
+      const deliveryAssignment = await DeliveryAssignment.create({
+        order: order._id,
+        broadcastedTo: candidates,
+        status: "broadcasted",
+      });
+
+      await deliveryAssignment.populate("order");
+
+      for (const boyId of candidates) {
+        const boy = await User.findById(boyId);
+        if (boy.socketId) {
+          await emitEventHandlers(
+            "new-assignment",
+            deliveryAssignment,
+            boy.socketId,
+          );
+        }
+      }
+
+      order.assignment = deliveryAssignment._id;
+      deliveryBoysPayload = availableDeliveryBoys.map((b) => ({
+        id: b._id,
+        name: b.name,
+        mobile: b.mobile,
+        latitude: b.location.coordinates[1],
+        longitude: b.location.coordinates[0],
+      }));
+
+      await deliveryAssignment.populate("order");
+    }
+
+    await order.save();
+    await order.populate("user");
+
+    const orderOwner = order.user as any;
+    const userSocketId = orderOwner?.socketId;
+
+    await emitEventHandlers(
+      "order-status-update",
+      {
+        orderId: order._id.toString(), 
+        status: order.status,
+      },
+      userSocketId, 
+    );
+
+    return NextResponse.json(
+      {
+        assignment: order.assignment?._id,
+        availableBoys: deliveryBoysPayload,
+      },
+      { status: 200 },
+    );
+  } catch (error) {
+    return NextResponse.json(
+      { message: `update status error ${error}` },
+      { status: 500 },
+    );
   }
 }

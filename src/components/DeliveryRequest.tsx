@@ -1,24 +1,59 @@
-'use client'
+"use client";
 
-import { IDeliveryAssignment } from "@/models/deliveryAssignment.model"
-import axios from "axios"
-import { useEffect, useState } from "react"
+import { getSocket } from "@/lib/socket";
+import axios from "axios";
+import { useEffect, useState } from "react";
+import { useSession } from "next-auth/react"; 
 
 const DeliveryRequest = () => {
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    const [assignments, setAssignments] = useState<any[]>([])
-    useEffect(() => {
-        const fetchAssignments = async () => {
-         try {
-             const result = await axios.get("/api/delivery/get-assignments")
-             setAssignments(result.data)
+  const { data: session } = useSession();
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const [assignments, setAssignments] = useState<any[]>([]);
 
-         } catch (error) {
-            console.log(error)
-         }
-        }  
-     fetchAssignments()   
-    },[])
+  useEffect(() => {
+    const fetchAssignments = async () => {
+      try {
+        const result = await axios.get("/api/delivery/get-assignments");
+        setAssignments(result.data);
+      } catch (error) {
+        console.log(error);
+      }
+    };
+    fetchAssignments();
+  }, []);
+
+  useEffect(() => {
+    if (!session?.user?.id) return;
+
+    const socket = getSocket();
+
+    const handleConnect = () => {
+      socket.emit("identity", session?.user?.id);
+    };
+
+    if (socket.connected) {
+      socket.emit("identity", session?.user?.id);
+    } else {
+      socket.on("connect", handleConnect);
+    }
+
+    return () => {
+      socket.off("connect", handleConnect);
+    };
+  }, [session?.user?.id]);
+
+  useEffect(() => {
+    const socket = getSocket();
+
+    const handleNewAssignment = (deliveryAssignment: any) => {
+      setAssignments((prev) => [...prev, deliveryAssignment]);
+    };
+
+    socket.on("new-assignment", handleNewAssignment);
+
+    return () => socket.off("new-assignment", handleNewAssignment);
+  }, []);
+
   return (
     <div className="w-full min-h-screen bg-gray-50 p-4">
       <div className="max-w-3xl mx-auto">
@@ -43,6 +78,6 @@ const DeliveryRequest = () => {
       </div>
     </div>
   );
-}
+};
 
-export default DeliveryRequest
+export default DeliveryRequest;

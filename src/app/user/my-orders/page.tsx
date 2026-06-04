@@ -9,9 +9,11 @@ import { BsBoxSeam } from "react-icons/bs";
 import { motion } from "framer-motion";
 import UserOrderCard from "@/components/UserOrderCard";
 import { getSocket } from "@/lib/socket";
+import { useSession } from "next-auth/react";
 
 const MyOrdersPage = () => {
   const router = useRouter();
+const { data: session } = useSession();
 
   const [orders, setOrders] = useState<IOrder[]>([]);
   const [loading, setLoading] = useState(true);
@@ -30,20 +32,39 @@ const MyOrdersPage = () => {
     getMyOrders();
   }, []);
 
-  useEffect(() => {
-    const socket = getSocket();
+useEffect(() => {
+  if (!session?.user?.id) return;
 
-    socket?.on("order-status-update", (data) => {
-      setOrders((prev) =>
-        prev.map((order) =>
-          order._id?.toString() == data.orderId.toString()
-            ? { ...order, status: data.status }
-            : order,
-        ),
-      );
-    });
-    return () => socket.off("order-status-update");
-  }, []);
+  const socket = getSocket();
+
+  const handleConnect = () => {
+    socket.emit("identity", session?.user?.id);
+  };
+
+  if (socket.connected) {
+    socket.emit("identity", session?.user?.id);
+  } else {
+    socket.on("connect", handleConnect);
+  }
+
+  const handleStatusUpdate = (data: { orderId: string; status: string }) => {
+    setOrders((prev) =>
+      prev.map((order) =>
+        order._id?.toString() === data.orderId.toString()
+          ? { ...order, status: data.status }
+          : order,
+      ),
+    );
+  };
+
+  socket.off("order-status-update");
+  socket.on("order-status-update", handleStatusUpdate);
+
+  return () => {
+    socket.off("connect", handleConnect);
+    socket.off("order-status-update", handleStatusUpdate);
+  };
+}, [session?.user?.id]);
 
   return (
     <div className="bg-gray-50/50 min-h-screen w-full">

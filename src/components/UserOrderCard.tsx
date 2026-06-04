@@ -14,12 +14,11 @@ const UserOrderCard = ({ order }: { order: IOrder }) => {
     const [expanded, setExpanded] = useState(false);
     const [status, setStatus] = useState(order.status)
 
-  // Soft, elegant badge styles using Tailwind's ring utility
   const getStatusStyle = (status: string) => {
     switch (status.toLowerCase()) {
       case "pending":
         return "bg-amber-50 text-amber-600 ring-1 ring-inset ring-amber-500/20";
-      case "out for delivery":
+      case "out of delivery":
         return "bg-blue-50 text-blue-600 ring-1 ring-inset ring-blue-500/20";
       case "delivered":
         return "bg-green-50 text-green-600 ring-1 ring-inset ring-green-500/20";
@@ -38,16 +37,22 @@ const UserOrderCard = ({ order }: { order: IOrder }) => {
     minute: "2-digit",
   });
     
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    useEffect(():any => {
-        const socket = getSocket()
-        socket.on("order-status-update", (data) => {
-            if (data.orderId.toString() == order?._id!.toString()) {
-                setStatus(data.status)
-            }
-        });
-      return () => socket.off("order-status-update");
-    },[])
+  useEffect(() => {
+    const socket = getSocket();
+
+    const handleStatusUpdate = (data: {
+      orderId: string;
+      status: string;
+    }) => {
+      if (data.orderId.toString() == order?._id!.toString()) {
+        setStatus(data.status);
+      }
+    };
+
+    socket.on("order-status-update", handleStatusUpdate);
+
+    return () => socket.off("order-status-update", handleStatusUpdate);
+  }, [order._id]);
 
   return (
     <motion.div
@@ -78,10 +83,9 @@ const UserOrderCard = ({ order }: { order: IOrder }) => {
           >
             {order.isPaid ? "Paid" : "Unpaid"}
           </span>
+
           <span
-            className={`px-3 py-1 text-[11px] font-bold uppercase tracking-wider rounded-full ${getStatusStyle(
-              status,
-            )}`}
+            className={`px-3 py-1 text-[11px] font-bold uppercase tracking-wider rounded-full ${getStatusStyle(status)}`}
           >
             {status}
           </span>
