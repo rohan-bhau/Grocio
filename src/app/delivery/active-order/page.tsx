@@ -9,6 +9,7 @@ import { useRouter } from 'next/navigation';
 import { useEffect, useState } from 'react';
 import { FaArrowLeft } from 'react-icons/fa';
 import { useSelector } from 'react-redux';
+import DeliveryChat from "@/components/DeliveryChat";
 
 export interface ILocation{
     latitude: number,
@@ -115,6 +116,9 @@ const ActiveOrder = () => {
               <div className='rounded-xl border shadow-lg border-gray-200'>
                   <LiveMap userLocation={userLocation} deliveryBoyLocation={deliveryBoyLocation} />
               </div>
+
+
+              <DeliveryChat orderId={activeOrder.order._id} deliveryBoyId={userData?._id} />
 
       </div>
     </div>

@@ -92,7 +92,14 @@ const DeliveryRequest = () => {
   useEffect(() => {
       fetchCurrentOrder()
       fetchAssignments();
-    }, [userData]);
+  }, [userData]);
+  
+  useEffect(() => {
+    const socket = getSocket()
+    socket.on("update-deliveryBoy-location", ({ userId, loctation }) => {
+      
+    });
+  },[])
 
   return (
     <div className="w-full min-h-screen bg-gray-50/50 p-4 md:p-6 pb-24 text-gray-900">

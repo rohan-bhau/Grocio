@@ -19,7 +19,6 @@ interface Iprops {
   deliveryBoyLocation: ILocation;
 }
 
-// ✅ Map center কে live update করার জন্য
 const MapUpdater = ({
   deliveryBoyLocation,
 }: {
@@ -33,6 +32,7 @@ const MapUpdater = ({
         map.getZoom(),
       );
     }
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [deliveryBoyLocation.latitude, deliveryBoyLocation.longitude]);
   return null;
 };
@@ -74,7 +74,7 @@ const LiveMap = ({ userLocation, deliveryBoyLocation }: Iprops) => {
           url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
         />
 
-        {/* ✅ Live center update */}
+        {/*  Live center update */}
         <MapUpdater deliveryBoyLocation={deliveryBoyLocation} />
 
         {/* User location */}
