@@ -1,13 +1,50 @@
 "use client";
-import { IOrder } from "@/models/order.model";
 import axios from "axios";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { AnimatePresence, motion } from "motion/react";
 import { IoIosArrowDown } from "react-icons/io";
 import { FiMapPin, FiPhone, FiUser } from "react-icons/fi";
 import { FaTruck } from "react-icons/fa";
 import { BiCreditCard, BiPackage } from "react-icons/bi";
 import Image from "next/image";
+import mongoose from "mongoose";
+import { IUser } from "@/models/user.model";
+
+
+interface IOrder {
+  [x: string]: any;
+  id?: mongoose.Types.ObjectId;
+  user: mongoose.Types.ObjectId;
+  items: [
+    {
+      grocery: mongoose.Types.ObjectId;
+      name: string;
+      price: string;
+      unit: string;
+      image: string;
+      quantity: number;
+    },
+  ];
+  isPaid: boolean;
+  totalAmount: number;
+  paymentMethod: "cod" | "online";
+  address: {
+    fullName: string;
+    mobile: string;
+    city: string;
+    state: string;
+    postalCode: string;
+    fullAddress: string;
+    latitude: number;
+    longitude: number;
+  };
+  assignment?: mongoose.Types.ObjectId;
+  assignedDeliveryBoy?: IUser
+
+  status: "pending" | "out of delivery" | "delivered";
+  createdAt?: Date;
+  updatedAt?: Date;
+}
 
 export const AdminOrderCard = ({
   order,
@@ -20,7 +57,7 @@ export const AdminOrderCard = ({
   ) => Promise<void>;
 }) => {
   const [expanded, setExpanded] = useState(false);
-  const [status, setStatus] = useState<string>(order.status);
+  const [status, setStatus] = useState<string>("pending");
 
   const formattedDate = new Date(order.createdAt!).toLocaleDateString("en-US", {
     day: "numeric",
@@ -67,7 +104,11 @@ export const AdminOrderCard = ({
       default:
         return "bg-red-50 text-red-600 ring-red-500/30 focus:ring-red-500";
     }
-  };
+    };
+    
+    // useEffect(() => {
+    //     setStatus(order.status)
+    // },[order])
 
   return (
     <motion.div
@@ -190,6 +231,38 @@ export const AdminOrderCard = ({
             </div>
           </div>
         </div>
+
+        {/* delivery info if assigned */}
+        {order.assignedDeliveryBoy && (
+          <div className="mt-6 border-t border-gray-100/80 pt-5">
+            <h3 className="text-[11px] font-bold text-gray-400 uppercase tracking-widest mb-3">
+              Delivery Assignment
+            </h3>
+            <div className="flex items-center justify-between bg-emerald-50/50 p-4 rounded-xl border border-emerald-100/50">
+              <div className="flex items-center gap-3">
+                <div className="w-10 h-10 bg-emerald-100 rounded-full flex items-center justify-center border border-emerald-200">
+                  <FaTruck className="text-[#00a850] text-lg" />
+                </div>
+                <div>
+                  <p className="text-xs text-gray-500 font-medium">
+                    Assigned to
+                  </p>
+                  <p className="text-sm font-bold text-gray-900">
+                    {order.assignedDeliveryBoy.name}
+                  </p>
+                </div>
+              </div>
+              {order.assignedDeliveryBoy.mobile && (
+                <a
+                  href={`tel:${order.assignedDeliveryBoy.mobile}`}
+                  className="flex items-center gap-2 text-xs font-bold text-[#00a850] bg-white px-3 py-1.5 rounded-lg border border-emerald-100 hover:bg-emerald-50 transition-colors"
+                >
+                  <FiPhone /> Call Rider
+                </a>
+              )}
+            </div>
+          </div>
+        )}
 
         {/* Expandable Items */}
         <div className="mt-6 border-t border-gray-100/80 pt-4">

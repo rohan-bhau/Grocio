@@ -1,7 +1,6 @@
 /* eslint-disable react-hooks/immutability */
 "use client";
 
-import { IOrder } from "@/models/order.model";
 import axios from "axios";
 import { useEffect, useState } from "react";
 import { motion } from "framer-motion";
@@ -10,6 +9,45 @@ import {  FaArrowLeft } from "react-icons/fa";
 import { useRouter } from "next/navigation";
 import { getSocket } from "@/lib/socket";
 import { AdminOrderCard } from "@/components/AdminOrderCard";
+import mongoose from "mongoose";
+import { IUser } from "@/models/user.model";
+
+
+
+interface IOrder {
+  [x: string]: any;
+  id?: mongoose.Types.ObjectId;
+  user: mongoose.Types.ObjectId;
+  items: [
+    {
+      grocery: mongoose.Types.ObjectId;
+      name: string;
+      price: string;
+      unit: string;
+      image: string;
+      quantity: number;
+    },
+  ];
+  isPaid: boolean;
+  totalAmount: number;
+  paymentMethod: "cod" | "online";
+  address: {
+    fullName: string;
+    mobile: string;
+    city: string;
+    state: string;
+    postalCode: string;
+    fullAddress: string;
+    latitude: number;
+    longitude: number;
+  };
+  assignment?: mongoose.Types.ObjectId;
+  assignedDeliveryBoy?: IUser
+
+  status: "pending" | "out of delivery" | "delivered";
+  createdAt?: Date;
+  updatedAt?: Date;
+}
 
 
 const ManageOrdersPage = () => {
