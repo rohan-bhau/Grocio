@@ -1,128 +1,225 @@
-'use client'
+/* eslint-disable react-hooks/set-state-in-effect */
+"use client";
 
 import dynamic from "next/dynamic";
 const LiveMap = dynamic(() => import("@/components/LiveMap"), { ssr: false });
-import { getSocket } from '@/lib/socket';
-import { RootState } from '@/redux/store';
-import axios from 'axios';
-import { useRouter } from 'next/navigation';
-import { useEffect, useState } from 'react';
-import { FaArrowLeft } from 'react-icons/fa';
-import { useSelector } from 'react-redux';
+import { getSocket } from "@/lib/socket";
+import { RootState } from "@/redux/store";
+import axios from "axios";
+import { useRouter } from "next/navigation";
+import { useEffect, useState } from "react";
+import { FaArrowLeft, FaTruck } from "react-icons/fa";
+import { useSelector } from "react-redux";
 import DeliveryChat from "@/components/DeliveryChat";
+import { motion } from "framer-motion";
 
-export interface ILocation{
-    latitude: number,
-    longitude:number
+export interface ILocation {
+  latitude: number;
+  longitude: number;
 }
 
 const ActiveOrder = () => {
-    const [activeOrder, setActiveOrder] = useState<any>(null)
-    const [userLocation, setUserLocation] = useState<ILocation>({
-        latitude: 0,
-        longitude:0
-    })
-    const [deliveryBoyLocation, setDeliveryBoyLocation] = useState<ILocation>({
-      latitude: 0,
-      longitude: 0,
-    });
-    
-    
+  const [activeOrder, setActiveOrder] = useState<any>(null);
+  const [loading, setLoading] = useState(true);
+  const [userLocation, setUserLocation] = useState<ILocation>({
+    latitude: 0,
+    longitude: 0,
+  });
+  const [deliveryBoyLocation, setDeliveryBoyLocation] = useState<ILocation>({
+    latitude: 0,
+    longitude: 0,
+  });
 
-    const { userData } = useSelector((state: RootState) => state.user)
-    
-    const router = useRouter()
+  const { userData } = useSelector((state: RootState) => state.user);
+  const router = useRouter();
 
-    useEffect(() => {
-         const fetchCurrentOrder = async () => {
-           try {
-             const result = await axios.get("/api/delivery/current-order");
-               console.log(result.data.assignment);
-               if (result.data.active) {
-                   setActiveOrder(result.data.assignment)
-                   setUserLocation({
-                       latitude: result.data.assignment.order.address.latitude,
-                       longitude: result.data.assignment.order.address.longitude,
-                   })
-               }
-           } catch (error) {
-             console.log(error);
-           }
-        };
-        fetchCurrentOrder();
-    }, [userData]);
+  useEffect(() => {
+    const fetchCurrentOrder = async () => {
+      try {
+        setLoading(true);
+        const result = await axios.get("/api/delivery/current-order");
+        if (result.data.active) {
+          setActiveOrder(result.data.assignment);
+          setUserLocation({
+            latitude: result.data.assignment.order.address.latitude,
+            longitude: result.data.assignment.order.address.longitude,
+          });
+        }
+      } catch (error) {
+        console.log(error);
+      } finally {
+        setLoading(false);
+      }
+    };
+    fetchCurrentOrder();
+  }, [userData]);
 
-    useEffect(() => {
-        const socket = getSocket()
-        if (!userData?._id) return;
-        if (!navigator.geolocation) return;
+  useEffect(() => {
+    const socket = getSocket();
+    if (!userData?._id) return;
+    if (!navigator.geolocation) return;
 
-        const watcher = navigator.geolocation.watchPosition(
-          (pos) => {
-            const lat = pos.coords.latitude;
-                const lon = pos.coords.longitude;
-                
-                setDeliveryBoyLocation({
-                    latitude: lat,
-                    longitude:lon
-                })
+    const watcher = navigator.geolocation.watchPosition(
+      (pos) => {
+        const lat = pos.coords.latitude;
+        const lon = pos.coords.longitude;
 
-            socket.emit("update-location", {
-              userId:userData?._id,
-              latitude: lat,
-              longitude: lon,
-            });
-          },
-          (err) => {
-            console.log(err);
-          },
-          { enableHighAccuracy: true },
-        );
+        setDeliveryBoyLocation({
+          latitude: lat,
+          longitude: lon,
+        });
 
-        return () => navigator.geolocation.clearWatch(watcher);
-    }, [userData?._id]);
+        socket.emit("update-location", {
+          userId: userData?._id,
+          latitude: lat,
+          longitude: lon,
+        });
+      },
+      (err) => {
+        console.log(err);
+      },
+      { enableHighAccuracy: true },
+    );
 
-    // empty active order
-    if (!activeOrder) {
-        return <div>
-            there is no active order
+    return () => navigator.geolocation.clearWatch(watcher);
+  }, [userData?._id]);
+
+  // Loading State
+  if (loading) {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-gray-50/50">
+        <div className="text-center">
+          <div className="w-16 h-16 border-4 border-[#00a850] border-t-transparent rounded-full animate-spin mx-auto mb-6 shadow-sm" />
+          <p className="text-gray-500 font-bold tracking-wide uppercase text-sm">
+            Fetching active order...
+          </p>
         </div>
-    }
+      </div>
+    );
+  }
 
-  return (
-    <div className="p-4 pt-30 min-h-screen bg-gray-50">
-      <div className="max-w-3xl mx-auto">
-        {/* heading */}
-        <div className="fixed top-0 left-0 w-full backdrop-blur-xl bg-white/80 shadow-[0_2px_10px_rgba(0,0,0,0.02)] border-b border-gray-100 z-50">
-          <div className="max-w-3xl mx-auto flex items-center gap-4 px-4 py-4">
+  // Meaningful Empty State
+  if (!activeOrder) {
+    return (
+      <div className="min-h-screen flex flex-col bg-gray-50/50">
+        <div className="fixed top-0 left-0 w-full bg-white/80 backdrop-blur-2xl border-b border-gray-100 shadow-[0_2px_20px_rgba(0,0,0,0.02)] z-50">
+          <div className="max-w-3xl mx-auto px-5 py-4 flex items-center gap-4">
             <button
               onClick={() => router.push("/")}
-              className="p-2.5 bg-gray-50 border border-gray-100 rounded-full hover:bg-gray-100 text-gray-600 hover:text-[#00a850] active:scale-95 transition-all"
+              className="p-2.5 bg-gray-50 border border-gray-100 rounded-full hover:bg-gray-100 text-gray-600 hover:text-[#00a850] transition-colors active:scale-95 cursor-pointer outline-none shrink-0"
             >
               <FaArrowLeft size={16} />
             </button>
-            <h1 className="text-xl font-bold text-gray-900 tracking-tight">
+            <h2 className="text-lg font-extrabold text-gray-900 tracking-tight">
               Active Order
-            </h1>
+            </h2>
           </div>
         </div>
 
-        <p>
-          active order{" "}
-          <span className='text-green-600 font-bold'>#{activeOrder.order._id.slice(-8).toUpperCase()}</span>
+        <div className="flex-1 flex items-center justify-center px-4 pt-20">
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            className="max-w-md w-full bg-white rounded-[2rem] shadow-[0_8px_30px_rgb(0,0,0,0.04)] border border-gray-100 p-8 text-center"
+          >
+            <div className="w-20 h-20 bg-gray-50 rounded-full flex items-center justify-center mx-auto mb-6 border border-gray-100">
+              <FaTruck className="text-4xl text-gray-300" />
+            </div>
+            <h2 className="text-2xl font-extrabold text-gray-900 mb-2">
+              No Active Orders
+            </h2>
+            <p className="text-gray-500 text-sm leading-relaxed mb-8">
+              You currently don't have any ongoing deliveries. Head back to the
+              dashboard to accept new requests.
+            </p>
+            <button
+              onClick={() => router.push("/")}
+              className="w-full bg-[#00a850] hover:bg-green-600 text-white font-bold py-3.5 rounded-xl shadow-[0_4px_14px_rgba(0,168,80,0.3)] hover:shadow-[0_6px_20px_rgba(0,168,80,0.4)] transition-all active:scale-95 uppercase tracking-wide text-sm outline-none cursor-pointer"
+            >
+              Go to Dashboard
+            </button>
+          </motion.div>
+        </div>
+      </div>
+    );
+  }
+
+  // Main UI
+  return (
+    <div className="w-full min-h-screen bg-slate-50/50 pb-24 font-sans text-gray-900">
+      <div className="max-w-3xl mx-auto">
+        {/* Fixed Header (z-[9999] to stay above map) */}
+        <div className="fixed top-0 left-0 w-full bg-white/80 backdrop-blur-2xl border-b border-gray-100 shadow-[0_2px_20px_rgba(0,0,0,0.02)] z-[9999]">
+          <div className="max-w-3xl mx-auto px-5 py-4 flex items-center gap-4">
+            <button
+              onClick={() => router.push("/")}
+              className="p-2.5 bg-gray-50 border border-gray-100 rounded-full hover:bg-gray-100 text-gray-600 hover:text-[#00a850] transition-colors active:scale-95 cursor-pointer outline-none shrink-0"
+            >
+              <FaArrowLeft size={16} />
+            </button>
+            <div>
+              <h1 className="text-lg font-extrabold text-gray-900 tracking-tight">
+                Current Delivery
+              </h1>
+              <p className="text-xs font-bold text-[#00a850] tracking-wider uppercase mt-0.5">
+                On Route
               </p>
-              
-              {/* live map */}
-              <div className='rounded-xl border shadow-lg border-gray-200'>
-                  <LiveMap userLocation={userLocation} deliveryBoyLocation={deliveryBoyLocation} />
-              </div>
+            </div>
+          </div>
+        </div>
 
+        <div className="pt-24 px-4 space-y-6">
+          {/* Order Highlight Card */}
+          <motion.div
+            initial={{ opacity: 0, y: 10 }}
+            animate={{ opacity: 1, y: 0 }}
+            className="bg-white border border-gray-100 rounded-[1.5rem] p-4 flex items-center justify-between shadow-sm"
+          >
+            <div>
+              <p className="text-[10px] font-bold text-gray-400 uppercase tracking-widest mb-1">
+                Order ID
+              </p>
+              <p className="text-base font-extrabold text-gray-900">
+                #{activeOrder.order._id.slice(-8).toUpperCase()}
+              </p>
+            </div>
+            <div className="bg-green-50 text-[#00a850] px-3 py-1.5 rounded-lg text-xs font-bold uppercase tracking-wide border border-green-100">
+              Active
+            </div>
+          </motion.div>
 
-              <DeliveryChat orderId={activeOrder.order._id} deliveryBoyId={userData?._id} />
+          {/* Live Map Container */}
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: 0.1 }}
+            className="bg-white rounded-[2rem] p-2 shadow-[0_4px_20px_rgb(0,0,0,0.03)] border border-gray-100 relative z-10"
+          >
+            <div className="rounded-[1.5rem] overflow-hidden relative border border-gray-50 bg-gray-50 h-[350px] md:h-[450px]">
+              <LiveMap
+                userLocation={userLocation}
+                deliveryBoyLocation={deliveryBoyLocation}
+              />
+            </div>
+          </motion.div>
 
+          {/* Delivery Chat Component Wrapper */}
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: 0.2 }}
+            className="bg-white rounded-[2rem] shadow-[0_4px_20px_rgb(0,0,0,0.03)] border border-gray-100 overflow-hidden relative z-10"
+          >
+            <DeliveryChat
+              orderId={activeOrder.order._id}
+              // eslint-disable-next-line @typescript-eslint/no-non-null-asserted-optional-chain
+              deliveryBoyId={userData?._id!}
+            />
+          </motion.div>
+        </div>
       </div>
     </div>
   );
-}
+};
 
-export default ActiveOrder
+export default ActiveOrder;
