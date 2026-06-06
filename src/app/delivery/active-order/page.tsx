@@ -12,6 +12,7 @@ import { FaArrowLeft, FaTruck } from "react-icons/fa";
 import { useSelector } from "react-redux";
 import DeliveryChat from "@/components/DeliveryChat";
 import { motion } from "framer-motion";
+import { RiLoaderLine } from "react-icons/ri";
 
 export interface ILocation {
   latitude: number;
@@ -20,7 +21,12 @@ export interface ILocation {
 
 const ActiveOrder = () => {
   const [activeOrder, setActiveOrder] = useState<any>(null);
-  const [loading, setLoading] = useState(true);
+    const [loading, setLoading] = useState(true);
+    const [showOtpBox, setShowOtpBox] = useState(false)
+    const [otp, setOtp] = useState('')
+    const [otpError, setOtpError] = useState("")
+    const [sendOtpLoading, setSendOtpLoading] = useState(false)
+    const [verifyOtpLoading, setVerifyOtpLoading] = useState(false)
   const [userLocation, setUserLocation] = useState<ILocation>({
     latitude: 0,
     longitude: 0,
@@ -83,6 +89,34 @@ const ActiveOrder = () => {
 
     return () => navigator.geolocation.clearWatch(watcher);
   }, [userData?._id]);
+    
+    const sendOtp = async () => {
+        setSendOtpLoading(true)
+        try {
+            const result = await axios.post("/api/delivery/otp/send", { orderId: activeOrder.order._id })
+            console.log(result.data)
+            setShowOtpBox(true)
+            setSendOtpLoading(false)
+        } catch (error) {
+            console.log(error)
+            setSendOtpLoading(false)
+        }
+    }
+
+    const verifyOtp = async () => {
+           setVerifyOtpLoading(true)
+       try {
+         const result = await axios.post("/api/delivery/otp/verify", { orderId: activeOrder.order._id, otp});
+         console.log(result.data);
+           setActiveOrder(null)
+           setVerifyOtpLoading(false)
+        //    await fetchCurrentOrder();
+       } catch (error) {
+           setOtpError("Otp Verification error")
+           setVerifyOtpLoading(false)
+       } 
+    }
+
 
   // Loading State
   if (loading) {
@@ -142,8 +176,7 @@ const ActiveOrder = () => {
         </div>
       </div>
     );
-  }
-
+    }
   // Main UI
   return (
     <div className="w-full min-h-screen bg-slate-50/50 pb-24 font-sans text-gray-900">
@@ -216,6 +249,46 @@ const ActiveOrder = () => {
               deliveryBoyId={userData?._id!}
             />
           </motion.div>
+        </div>
+
+        <div className="mt-6 bg-white rounded-xl border border-gray-100 shadow p-6">
+          {!activeOrder.order.deliveryOtpVerification && !showOtpBox && (
+            <button
+              onClick={sendOtp}
+              className="w-full py-4 bg-green-600 text-white rounded-lg"
+            >
+              {sendOtpLoading ? (
+                <RiLoaderLine size={16} className="animate-spin text-white flex justify-center" />
+              ) : (
+                "Mark as Delivered"
+              )}
+            </button>
+          )}
+
+          {showOtpBox && (
+            <div className="mt-4">
+              <input
+                type="number"
+                onChange={(e) => setOtp(e.target.value)}
+                value={otp}
+                className="w-full py-3 border border-gray-100 focus:ring-2 focus:ring-green-600 outline-none rounded-lg text-center"
+                placeholder="Enter otp"
+                maxLength={4}
+              />
+              <button
+                onClick={verifyOtp}
+                className="w-full mt-4 bg-blue-600 text-white py-4 rounded-lg"
+              >
+                {verifyOtpLoading ? (
+                  <RiLoaderLine size={16} className="animate-spin flex justify-center text-white" />
+                ) : (
+                  "Verify OTP"
+                )}
+              </button>
+              {otpError && <div className="text-red-600 mt-2">{otpError}</div>}
+            </div>
+                  )}
+                  {activeOrder.order.deliveryOtpVerification && <div className="text-green-700 text-center font-bold">Delivery Completed</div>}
         </div>
       </div>
     </div>
