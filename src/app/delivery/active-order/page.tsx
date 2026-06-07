@@ -255,10 +255,10 @@ const ActiveOrder = () => {
           {!activeOrder.order.deliveryOtpVerification && !showOtpBox && (
             <button
               onClick={sendOtp}
-              className="w-full py-4 bg-green-600 text-white rounded-lg"
+              className="w-full py-4 bg-green-600 hover:bg-green-700 cursor-pointer font-semibold active:scale-50 text-white rounded-lg"
             >
               {sendOtpLoading ? (
-                <RiLoaderLine size={16} className="animate-spin text-white flex justify-center" />
+                <RiLoaderLine size={16} className="animate-spin text-white text-center mx-auto flex justify-center" />
               ) : (
                 "Mark as Delivered"
               )}
@@ -277,10 +277,10 @@ const ActiveOrder = () => {
               />
               <button
                 onClick={verifyOtp}
-                className="w-full mt-4 bg-blue-600 text-white py-4 rounded-lg"
+                className="w-full mt-4 bg-blue-600 hover:bg-blue-700 active:scale-50 font-semibold cursor-pointer text-white py-4 rounded-lg"
               >
                 {verifyOtpLoading ? (
-                  <RiLoaderLine size={16} className="animate-spin flex justify-center text-white" />
+                  <RiLoaderLine size={16} className="animate-spin flex justify-center text-white text-center mx-auto" />
                 ) : (
                   "Verify OTP"
                 )}

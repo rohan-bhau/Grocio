@@ -97,6 +97,24 @@ const TrackOrderPage = () => {
 
   useEffect(() => {
     const socket = getSocket();
+
+    const handleStatusUpdate = (data: { orderId: string; status: string }) => {
+      if (data.orderId === id?.toString()) {
+        setOrder((prev: any) => ({ ...prev, status: data.status }));
+
+        if (data.status === "delivered") {
+          router.push("/user/my-orders");
+        }
+      }
+    };
+
+    socket.on("order-status-update", handleStatusUpdate);
+    return () => socket.off("order-status-update", handleStatusUpdate);
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [id]);
+
+  useEffect(() => {
+    const socket = getSocket();
     socket.emit("join-room", id);
     socket.on("send-message", (message) => {
       if (message.roomId == id) {
@@ -150,7 +168,7 @@ const TrackOrderPage = () => {
         role: "user",
       });
       setSuggestions(result.data);
-      console.log(result.data)
+      console.log(result.data);
       setLoading(false);
     } catch (error) {
       console.log(error);
@@ -351,6 +369,6 @@ const TrackOrderPage = () => {
       </div>
     </div>
   );
-};
+};;
 
 export default TrackOrderPage;

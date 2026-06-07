@@ -9,7 +9,7 @@ import { BiCreditCard, BiPackage } from "react-icons/bi";
 import Image from "next/image";
 import mongoose from "mongoose";
 import { IUser } from "@/models/user.model";
-
+import { getSocket } from "@/lib/socket"; 
 
 interface IOrder {
   [x: string]: any;
@@ -39,8 +39,7 @@ interface IOrder {
     longitude: number;
   };
   assignment?: mongoose.Types.ObjectId;
-  assignedDeliveryBoy?: IUser
-
+  assignedDeliveryBoy?: IUser;
   status: "pending" | "out of delivery" | "delivered";
   createdAt?: Date;
   updatedAt?: Date;
@@ -57,7 +56,7 @@ export const AdminOrderCard = ({
   ) => Promise<void>;
 }) => {
   const [expanded, setExpanded] = useState(false);
-  const [status, setStatus] = useState<string>("pending");
+  const [status, setStatus] = useState<string>(order.status);
 
   const formattedDate = new Date(order.createdAt!).toLocaleDateString("en-US", {
     day: "numeric",
@@ -66,6 +65,19 @@ export const AdminOrderCard = ({
     hour: "2-digit",
     minute: "2-digit",
   });
+
+  useEffect(() => {
+    const socket = getSocket();
+
+    const handleStatusUpdate = (data: { orderId: string; status: string }) => {
+      if (data.orderId === order._id?.toString()) {
+        setStatus(data.status);
+      }
+    };
+
+    socket.on("order-status-update", handleStatusUpdate);
+    return () => socket.off("order-status-update", handleStatusUpdate);
+  }, [order._id]);
 
   const handleStatusUpdate = async (orderId: string, status: string) => {
     try {
@@ -104,11 +116,7 @@ export const AdminOrderCard = ({
       default:
         return "bg-red-50 text-red-600 ring-red-500/30 focus:ring-red-500";
     }
-    };
-    
-    // useEffect(() => {
-    //     setStatus(order.status)
-    // },[order])
+  };
 
   return (
     <motion.div
@@ -138,36 +146,36 @@ export const AdminOrderCard = ({
             {status}
           </span>
 
-          {/* Row 2 — Paid/Unpaid + Dropdown */}
-          <div className="flex items-center gap-2">
-            <span
-              className={`px-3 py-1.5 text-[11px] font-bold uppercase tracking-wider rounded-lg ring-1 ring-inset ${
-                order.isPaid
-                  ? "bg-emerald-50 text-emerald-600 ring-emerald-500/20"
-                  : "bg-rose-50 text-rose-600 ring-rose-500/20"
-              }`}
-            >
-              {order.isPaid ? "Paid" : "Unpaid"}
-            </span>
-
-            <div className="relative">
-              <select
-                value={status.toLowerCase()}
-                onChange={(e) =>
-                  handleStatusUpdate(order._id?.toString(), e.target.value)
-                }
-                className={`appearance-none outline-none text-xs font-bold uppercase tracking-wider px-4 py-1.5 pr-8 rounded-lg cursor-pointer transition-all ring-1 ring-inset focus:ring-2 ${getSelectStyle(status)}`}
+          {/* Row 2 — Paid/Unpaid + Dropdown — delivered হলে hide */}
+          {status !== "delivered" && (
+            <div className="flex items-center gap-2">
+              <span
+                className={`px-3 py-1.5 text-[11px] font-bold uppercase tracking-wider rounded-lg ring-1 ring-inset ${
+                  order.isPaid
+                    ? "bg-emerald-50 text-emerald-600 ring-emerald-500/20"
+                    : "bg-rose-50 text-rose-600 ring-rose-500/20"
+                }`}
               >
-                <option value="pending">Pending</option>
-                <option value="out of delivery">Out for Delivery</option>
-                {/* <option value="delivered">Delivered</option>
-                <option value="cancelled">Cancelled</option> */}
-              </select>
-              <div className="pointer-events-none absolute inset-y-0 right-0 flex items-center px-2 text-current opacity-70">
-                <IoIosArrowDown size={14} />
+                {order.isPaid ? "Paid" : "Unpaid"}
+              </span>
+
+              <div className="relative">
+                <select
+                  value={status.toLowerCase()}
+                  onChange={(e) =>
+                    handleStatusUpdate(order._id?.toString(), e.target.value)
+                  }
+                  className={`appearance-none outline-none text-xs font-bold uppercase tracking-wider px-4 py-1.5 pr-8 rounded-lg cursor-pointer transition-all ring-1 ring-inset focus:ring-2 ${getSelectStyle(status)}`}
+                >
+                  <option value="pending">Pending</option>
+                  <option value="out of delivery">Out for Delivery</option>
+                </select>
+                <div className="pointer-events-none absolute inset-y-0 right-0 flex items-center px-2 text-current opacity-70">
+                  <IoIosArrowDown size={14} />
+                </div>
               </div>
             </div>
-          </div>
+          )}
         </div>
       </div>
 
@@ -232,7 +240,7 @@ export const AdminOrderCard = ({
           </div>
         </div>
 
-        {/* delivery info if assigned */}
+        {/* Delivery Assignment Info */}
         {order.assignedDeliveryBoy && (
           <div className="mt-6 border-t border-gray-100/80 pt-5">
             <h3 className="text-[11px] font-bold text-gray-400 uppercase tracking-widest mb-3">
@@ -253,8 +261,8 @@ export const AdminOrderCard = ({
                 </div>
               </div>
               {order.assignedDeliveryBoy.mobile && (
-                <a
-                  href={`tel:${order.assignedDeliveryBoy.mobile}`}
+                
+                 <a href={`tel:${order.assignedDeliveryBoy.mobile}`}
                   className="flex items-center gap-2 text-xs font-bold text-[#00a850] bg-white px-3 py-1.5 rounded-lg border border-emerald-100 hover:bg-emerald-50 transition-colors"
                 >
                   <FiPhone /> Call Rider

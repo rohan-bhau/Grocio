@@ -1,6 +1,5 @@
 "use client";
 
-import { IOrder } from "@/models/order.model";
 import axios from "axios";
 import { useRouter } from "next/navigation";
 import React, { useEffect, useState } from "react";
@@ -10,6 +9,43 @@ import { motion } from "framer-motion";
 import UserOrderCard from "@/components/UserOrderCard";
 import { getSocket } from "@/lib/socket";
 import { useSession } from "next-auth/react";
+import mongoose from "mongoose";
+import { IUser } from "@/models/user.model";
+
+interface IOrder {
+  [x: string]: any;
+  id?: mongoose.Types.ObjectId;
+  user: mongoose.Types.ObjectId;
+  items: [
+    {
+      grocery: mongoose.Types.ObjectId;
+      name: string;
+      price: string;
+      unit: string;
+      image: string;
+      quantity: number;
+    },
+  ];
+  isPaid: boolean;
+  totalAmount: number;
+  paymentMethod: "cod" | "online";
+  address: {
+    fullName: string;
+    mobile: string;
+    city: string;
+    state: string;
+    postalCode: string;
+    fullAddress: string;
+    latitude: number;
+    longitude: number;
+  };
+  assignment?: mongoose.Types.ObjectId;
+  assignedDeliveryBoy?: IUser
+
+  status: "pending" | "out of delivery" | "delivered";
+  createdAt?: Date;
+  updatedAt?: Date;
+}
 
 const MyOrdersPage = () => {
   const router = useRouter();
@@ -31,6 +67,16 @@ const { data: session } = useSession();
     };
     getMyOrders();
   }, []);
+
+  useEffect(() => {
+    const socket = getSocket()
+    socket.on("order-assigned", ({ orderId, assignedDeliveryBoy }) => {
+      setOrders((prev) => prev?.map((o) => (
+        o._id==orderId? {...o, assignedDeliveryBoy} : o
+      )))
+    })
+    return () => {socket.off("order-assigned")};
+  },[])
 
 useEffect(() => {
   if (!session?.user?.id) return;

@@ -4,15 +4,14 @@
 import axios from "axios";
 import { useEffect, useState } from "react";
 import { motion } from "framer-motion";
-import {  BiPackage } from "react-icons/bi";
-import {  FaArrowLeft } from "react-icons/fa";
+import { BiPackage } from "react-icons/bi";
+import { FaArrowLeft } from "react-icons/fa";
 import { useRouter } from "next/navigation";
 import { getSocket } from "@/lib/socket";
 import { AdminOrderCard } from "@/components/AdminOrderCard";
 import mongoose from "mongoose";
 import { IUser } from "@/models/user.model";
-
-
+import { useSession } from "next-auth/react"; // ✅ add
 
 interface IOrder {
   [x: string]: any;
@@ -42,22 +41,42 @@ interface IOrder {
     longitude: number;
   };
   assignment?: mongoose.Types.ObjectId;
-  assignedDeliveryBoy?: IUser
-
+  assignedDeliveryBoy?: IUser;
   status: "pending" | "out of delivery" | "delivered";
   createdAt?: Date;
   updatedAt?: Date;
 }
 
-
 const ManageOrdersPage = () => {
   const router = useRouter();
+  const { data: session } = useSession(); // ✅ add
   const [orders, setOrders] = useState<IOrder[]>([]);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
     fetchOrders();
   }, []);
+
+  // ✅ identity emit — admin এর socketId DB তে save হবে
+  useEffect(() => {
+    if (!session?.user?.id) return;
+
+    const socket = getSocket();
+
+    const handleConnect = () => {
+      socket.emit("identity", session?.user?.id);
+    };
+
+    if (socket.connected) {
+      socket.emit("identity", session?.user?.id);
+    } else {
+      socket.on("connect", handleConnect);
+    }
+
+    return () => {
+      socket.off("connect", handleConnect);
+    };
+  }, [session?.user?.id]);
 
   const fetchOrders = async () => {
     try {
@@ -69,36 +88,45 @@ const ManageOrdersPage = () => {
     } finally {
       setLoading(false);
     }
+  };
+
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  useEffect((): any => {
+    const socket = getSocket();
+
+    socket?.on("new-order", (newOrder) => {
+      setOrders((prev) => [newOrder, ...prev]);
+    });
+
+    socket.on("order-assigned", ({ orderId, assignedDeliveryBoy }) => {
+      setOrders((prev) =>
+        prev?.map((o) =>
+          o._id == orderId ? { ...o, assignedDeliveryBoy } : o,
+        ),
+      );
+    });
+
+    return () => {
+      socket.off("new-order");
+      socket.off("order-assigned");
     };
-    
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    useEffect(():any => {
-        const socket = getSocket()
-        socket?.on("new-order", (newOrder) => {
-       setOrders((prev)=>[newOrder, ...prev])
-        })   
-    return ()=>socket.off("new-order")    
-    },[])
+  }, []);
 
   const handleStatusChange = async (
     orderId: string,
     newStatus: IOrder["status"],
   ) => {
     try {
-      // Optimistic UI Update
       setOrders((prevOrders) =>
         prevOrders.map((order) =>
           order._id === orderId ? { ...order, status: newStatus } : order,
         ),
       );
-
-      // API Call - Adjust the endpoint as per your backend route
       await axios.patch(`/api/admin/update-order-status/${orderId}`, {
         status: newStatus,
       });
     } catch (error) {
       console.error("Failed to update status", error);
-      // Revert on failure by fetching again
       fetchOrders();
     }
   };
@@ -127,7 +155,6 @@ const ManageOrdersPage = () => {
 
       <div className="max-w-5xl mx-auto px-6 mt-8">
         {loading ? (
-          /* Loading Skeleton */
           <div className="space-y-6">
             {[1, 2, 3].map((n) => (
               <div
@@ -152,7 +179,6 @@ const ManageOrdersPage = () => {
             ))}
           </div>
         ) : orders.length === 0 ? (
-          /* Empty State */
           <div className="flex flex-col items-center justify-center pt-20">
             <div className="w-24 h-24 bg-gray-100 rounded-full flex items-center justify-center mb-4">
               <BiPackage className="text-4xl text-gray-400" />
@@ -163,7 +189,6 @@ const ManageOrdersPage = () => {
             </p>
           </div>
         ) : (
-          /* Order List */
           <div className="space-y-6">
             {orders.map((order, idx) => (
               <motion.div

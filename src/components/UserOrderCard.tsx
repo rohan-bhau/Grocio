@@ -115,15 +115,17 @@ const UserOrderCard = ({ order }: { order: IOrder }) => {
         </div>
 
         <div className="flex items-center gap-3">
-          <span
-            className={`px-3 py-1 text-[11px] font-bold uppercase tracking-wider rounded-full ${
-              order.isPaid
-                ? "bg-emerald-50 text-emerald-600 ring-1 ring-inset ring-emerald-500/20"
-                : "bg-rose-50 text-rose-600 ring-1 ring-inset ring-rose-500/20"
-            }`}
-          >
-            {order.isPaid ? "Paid" : "Unpaid"}
-          </span>
+          {status !== "delivered" && (
+            <span
+              className={`px-3 py-1 text-[11px] font-bold uppercase tracking-wider rounded-full ${
+                order.isPaid
+                  ? "bg-emerald-50 text-emerald-600 ring-1 ring-inset ring-emerald-500/20"
+                  : "bg-rose-50 text-rose-600 ring-1 ring-inset ring-rose-500/20"
+              }`}
+            >
+              {order.isPaid ? "Paid" : "Unpaid"}
+            </span>
+          )}
 
           <span
             className={`px-3 py-1 text-[11px] font-bold uppercase tracking-wider rounded-full ${getStatusStyle(status)}`}
@@ -196,39 +198,49 @@ const UserOrderCard = ({ order }: { order: IOrder }) => {
         </div>
 
         {/* delivery info if assigned */}
-        {order.assignedDeliveryBoy && (
+
+        {status !== "delivered" && (
           <>
-            <div className="mt-6 border-t border-gray-100/80 pt-5">
-              <h3 className="text-[11px] font-bold text-gray-400 uppercase tracking-widest mb-3">
-                Delivery Assignment
-              </h3>
-              <div className="flex items-center justify-between bg-emerald-50/50 p-4 rounded-xl border border-emerald-100/50">
-                <div className="flex items-center gap-3">
-                  <div className="w-10 h-10 bg-emerald-100 rounded-full flex items-center justify-center border border-emerald-200">
-                    <FaTruck className="text-[#00a850] text-lg" />
+            {order.assignedDeliveryBoy && (
+              <>
+                <div className="mt-6 border-t border-gray-100/80 pt-5">
+                  <h3 className="text-[11px] font-bold text-gray-400 uppercase tracking-widest mb-3">
+                    Delivery Assignment
+                  </h3>
+                  <div className="flex items-center justify-between bg-emerald-50/50 p-4 rounded-xl border border-emerald-100/50">
+                    <div className="flex items-center gap-3">
+                      <div className="w-10 h-10 bg-emerald-100 rounded-full flex items-center justify-center border border-emerald-200">
+                        <FaTruck className="text-[#00a850] text-lg" />
+                      </div>
+                      <div>
+                        <p className="text-xs text-gray-500 font-medium">
+                          Assigned to
+                        </p>
+                        <p className="text-sm font-bold text-gray-900">
+                          {order.assignedDeliveryBoy.name}
+                        </p>
+                      </div>
+                    </div>
+                    {order.assignedDeliveryBoy.mobile && (
+                      <a
+                        href={`tel:${order.assignedDeliveryBoy.mobile}`}
+                        className="flex items-center gap-2 text-xs font-bold text-[#00a850] bg-white px-3 py-1.5 rounded-lg border border-emerald-100 hover:bg-emerald-50 transition-colors"
+                      >
+                        <FiPhone /> Call Rider
+                      </a>
+                    )}
                   </div>
-                  <div>
-                    <p className="text-xs text-gray-500 font-medium">
-                      Assigned to
-                    </p>
-                    <p className="text-sm font-bold text-gray-900">
-                      {order.assignedDeliveryBoy.name}
-                    </p>
-                  </div>
-                </div>
-                {order.assignedDeliveryBoy.mobile && (
-                  <a
-                    href={`tel:${order.assignedDeliveryBoy.mobile}`}
-                    className="flex items-center gap-2 text-xs font-bold text-[#00a850] bg-white px-3 py-1.5 rounded-lg border border-emerald-100 hover:bg-emerald-50 transition-colors"
+                  <button
+                    onClick={() =>
+                      router.push(`/user/track-order/${order._id.toString()}`)
+                    }
+                    className="flex items-center justify-center gap-2 mt-5 cursor-pointer w-full  font-semibold text-white bg-[#00a850] px-4 py-2 rounded-lg hover:bg-green-700 transition-colors shadow-sm active:scale-95"
                   >
-                    <FiPhone /> Call Rider
-                  </a>
-                )}
-              </div>
-              <button onClick={()=>router.push(`/user/track-order/${order._id.toString()}`)} className="flex items-center justify-center gap-2 mt-5 cursor-pointer w-full  font-semibold text-white bg-[#00a850] px-4 py-2 rounded-lg hover:bg-green-700 transition-colors shadow-sm active:scale-95">
-                <TbTruckDelivery size={18} /> Track Your Order
-              </button>
-            </div>
+                    <TbTruckDelivery size={18} /> Track Your Order
+                  </button>
+                </div>
+              </>
+            )}
           </>
         )}
 

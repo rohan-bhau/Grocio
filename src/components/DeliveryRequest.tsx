@@ -71,14 +71,7 @@ const DeliveryRequest = () => {
     });
   };
 
-  const handleAccept =async (id:string) => {
-    try {
-      const result = await axios.get(`/api/delivery/assignment/${id}/accept-assignment`)
-      console.log(result)
-    } catch (error) {
-      console.log(error)
-    }
-  }
+
 
   const fetchCurrentOrder =async () => {
     try {
@@ -88,6 +81,18 @@ const DeliveryRequest = () => {
       console.log(error)
     }
   }
+
+    const handleAccept = async (id: string) => {
+      try {
+        const result = await axios.get(
+          `/api/delivery/assignment/${id}/accept-assignment`,
+        );
+        fetchCurrentOrder()
+        router.push("/delivery/active-order")
+      } catch (error) {
+        console.log(error);
+      }
+    };
 
   useEffect(() => {
       fetchCurrentOrder()
@@ -236,7 +241,8 @@ const DeliveryRequest = () => {
                         Decline
                       </button>
                       <button
-                        onClick={() => handleAccept(a._id)}
+                        onClick={() =>
+                          handleAccept(a._id)}
                         className="flex-[2] bg-[#00a850] cursor-pointer text-white font-bold py-3.5 rounded-xl shadow-[0_4px_14px_rgba(0,168,80,0.3)] active:scale-[0.98] transition-all uppercase tracking-wide text-sm"
                       >
                         Accept Order
