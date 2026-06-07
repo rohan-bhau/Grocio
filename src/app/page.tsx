@@ -1,5 +1,4 @@
 import { auth } from "@/auth";
-import AdminDashboard from "@/components/dashboards/AdminDashboard";
 import DeliveryBoyDashboard from "@/components/dashboards/DeliveryBoyDashboard";
 import UserDashboard from "@/components/dashboards/UserDashboard";
 import EditRoleMobile from "@/components/EditRoleMobile";
@@ -15,7 +14,7 @@ const Home = async () => {
 
   const user = await User.findById(session?.user?.id);
   const plainUser = JSON.parse(JSON.stringify(user));
-  // console.log(user)
+
   if (!user) {
     redirect("/login");
   }
@@ -27,17 +26,15 @@ const Home = async () => {
     return <EditRoleMobile />;
   }
 
+  if (user.role === "admin") {
+    redirect("/admin");
+  }
+
   return (
     <div>
       <Navbar user={plainUser} />
-      <GeoUpdater userId={ plainUser._id} />
-      {user.role === "user" ? (
-        <UserDashboard />
-      ) : user.role === "admin" ? (
-        <AdminDashboard />
-      ) : (
-        <DeliveryBoyDashboard />
-      )}
+      <GeoUpdater userId={plainUser._id} />
+      {user.role === "user" ? <UserDashboard /> : <DeliveryBoyDashboard />}
     </div>
   );
 };

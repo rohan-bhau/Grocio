@@ -104,16 +104,8 @@ const AddGroceryPage = () => {
     "w-full border border-gray-200 rounded-xl px-4 py-3 outline-none focus:ring-2 focus:ring-green-400 focus:border-green-400 transition-all text-gray-800 placeholder:text-gray-400 bg-white";
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-gray-50 py-20 px-4 relative">
-      <Link
-        href={"/"}
-        className="absolute top-6 left-6 flex items-center gap-2 text-gray-600 font-semibold bg-white px-5 py-2.5 rounded-full shadow-sm hover:shadow-md hover:bg-gray-50 transition-all border border-gray-100 z-10"
-      >
-        <IoArrowBackSharp className="text-xl" />
-        <span className="hidden md:flex">Back to home</span>
-      </Link>
-
-      <motion.div
+    <div className="min-h-screen flex items-center justify-center bg-gray-50 pb-20 px-4 relative">
+  <motion.div
         initial={{ opacity: 0, y: 20 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ duration: 0.5 }}

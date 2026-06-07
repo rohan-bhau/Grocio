@@ -86,7 +86,7 @@ const Navbar = ({ user }: { user: IUser }) => {
 
             <motion.div
               ref={sidebarRef}
-              initial={{ x: "100%" }} // Eita ekhon right theke ashbe (tumi chaile -100% diye left thekeo ante paro)
+              initial={{ x: "100%" }} 
               animate={{ x: 0 }}
               exit={{ x: "100%" }}
               transition={{ type: "spring", damping: 25, stiffness: 200 }}
@@ -134,7 +134,7 @@ const Navbar = ({ user }: { user: IUser }) => {
                       Main Menu
                     </h3>
                     <Link
-                      href="/admin/dashboard"
+                      href="/admin"
                       onClick={() => setIsSidebarOpen(false)}
                       className="flex items-center gap-4 px-4 py-3 rounded-xl text-gray-700 hover:bg-green-50 hover:text-green-700 transition-all group font-medium"
                     >
@@ -265,7 +265,7 @@ const Navbar = ({ user }: { user: IUser }) => {
             </div>
           )}
 
-          {user?.role === "admin" && (
+          {/* {user?.role === "admin" && (
             <>
               <Link
                 href="/admin/add-grocery"
@@ -286,7 +286,7 @@ const Navbar = ({ user }: { user: IUser }) => {
                 <FiList className="text-lg" /> Manage Orders
               </Link>
             </>
-          )}
+          )} */}
 
           {user?.role === "deliveryBoy" && (
             <>
@@ -431,7 +431,7 @@ const Navbar = ({ user }: { user: IUser }) => {
                   <div className="p-2 flex flex-col gap-1">
                     {user?.role === "admin" && (
                       <Link
-                        href="/admin/dashboard"
+                        href="/admin"
                         className="flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium text-gray-600 hover:bg-blue-50 hover:text-blue-700 transition-all"
                       >
                         <FiGrid className="text-lg text-gray-400" /> Dashboard

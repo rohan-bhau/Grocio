@@ -133,24 +133,8 @@ const ManageOrdersPage = () => {
 
   return (
     <div className="bg-gray-50/50 min-h-screen w-full pb-16">
-      {/* Top Header */}
-      <div className="sticky top-0 w-full backdrop-blur-xl bg-white/80 shadow-[0_2px_10px_rgba(0,0,0,0.02)] border-b border-gray-100 z-50">
-        <div className="max-w-5xl mx-auto flex items-center justify-between px-6 py-4">
-          <div className="flex items-center gap-4">
-            <button
-              onClick={() => router.back()}
-              className="p-2.5 bg-gray-50 border border-gray-100 rounded-full hover:bg-gray-100 text-gray-600 hover:text-[#00a850] transition-all"
-            >
-              <FaArrowLeft size={16} />
-            </button>
-            <h1 className="text-xl font-bold text-gray-900 tracking-tight">
-              Manage Orders
-            </h1>
-          </div>
-          <div className="text-sm font-semibold text-gray-500 bg-gray-50 px-3 py-1.5 rounded-lg border border-gray-100">
-            Total Orders: {orders?.length || 0}
-          </div>
-        </div>
+      <div className="text-sm font-semibold text-gray-500  px-3 py-1.5 rounded-lg  ">
+        Total Orders: {orders?.length || 0}
       </div>
 
       <div className="max-w-5xl mx-auto px-6 mt-8">
