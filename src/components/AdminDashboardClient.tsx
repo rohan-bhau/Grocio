@@ -66,7 +66,6 @@ const AdminDashboardClient = ({ earnings, stats, chartData }: propType) => {
 
   return (
     <div className="space-y-6 w-full">
-
       {/* DASHBOARD HEADING & FILTER */}
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 pt-2">
         <div>
@@ -107,7 +106,7 @@ const AdminDashboardClient = ({ earnings, stats, chartData }: propType) => {
             {title}
           </h2>
           <p className="text-4xl font-extrabold text-gray-900 tracking-tight mt-1">
-            $
+            ৳
             {currentEarning.toLocaleString(undefined, {
               minimumFractionDigits: 2,
               maximumFractionDigits: 2,

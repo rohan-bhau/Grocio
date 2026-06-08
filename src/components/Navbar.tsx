@@ -183,7 +183,7 @@ const Navbar = ({ user }: { user: IUser }) => {
                       Deliveries
                     </h3>
                     <Link
-                      href="/delivery/dashboard"
+                      href="/delivery"
                       onClick={() => setIsSidebarOpen(false)}
                       className="flex items-center gap-4 px-4 py-3 rounded-xl text-gray-700 hover:bg-yellow-50 hover:text-yellow-700 transition-all group font-medium"
                     >
@@ -287,7 +287,7 @@ const Navbar = ({ user }: { user: IUser }) => {
               </Link>
             </>
           )} */}
-
+{/* 
           {user?.role === "deliveryBoy" && (
             <>
               <Link
@@ -303,7 +303,7 @@ const Navbar = ({ user }: { user: IUser }) => {
                 <FiClock className="text-lg" /> History
               </Link>
             </>
-          )}
+          )} */}
         </div>
 
         {/* 3. RIGHT SIDE: CART, MENU ICON & PROFILE */}
@@ -439,7 +439,7 @@ const Navbar = ({ user }: { user: IUser }) => {
                     )}
                     {user?.role === "deliveryBoy" && (
                       <Link
-                        href="/delivery/dashboard"
+                        href="/delivery"
                         className="flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium text-gray-600 hover:bg-yellow-50 hover:text-yellow-700 transition-all"
                       >
                         <FiGrid className="text-lg text-gray-400" /> Dashboard

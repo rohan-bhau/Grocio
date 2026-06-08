@@ -110,7 +110,7 @@ const DeliveryRequest = () => {
     <div className="w-full min-h-screen bg-gray-50/50 p-4 md:p-6 pb-24 text-gray-900">
       <div className="max-w-3xl mx-auto">
         {/* Header Section With Back Button */}
-        <div className="flex items-center justify-between mb-8 sticky top-0 bg-gray-50/80 backdrop-blur-md py-4 z-10">
+        {/* <div className="flex items-center justify-between mb-8 sticky top-0 bg-gray-50/80 backdrop-blur-md py-4 z-10">
           <div className="flex items-center gap-4">
             <button
               onClick={() => router.push("/")}
@@ -127,7 +127,7 @@ const DeliveryRequest = () => {
               {assignments.length} Pending
             </span>
           )}
-        </div>
+        </div> */}
 
         {/* Empty State */}
         {assignments.length === 0 ? (

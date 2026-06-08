@@ -30,11 +30,16 @@ const Home = async () => {
     redirect("/admin");
   }
 
+  if (user.role === "deliveryBoy") {
+    redirect("/delivery")
+  }
+
   return (
     <div>
       <Navbar user={plainUser} />
       <GeoUpdater userId={plainUser._id} />
-      {user.role === "user" ? <UserDashboard /> : <DeliveryBoyDashboard />}
+      
+      {user.role === "user" && <UserDashboard />}
     </div>
   );
 };

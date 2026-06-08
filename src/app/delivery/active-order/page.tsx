@@ -135,8 +135,8 @@ const ActiveOrder = () => {
   // Meaningful Empty State
   if (!activeOrder) {
     return (
-      <div className="min-h-screen flex flex-col bg-gray-50/50">
-        <div className="fixed top-0 left-0 w-full bg-white/80 backdrop-blur-2xl border-b border-gray-100 shadow-[0_2px_20px_rgba(0,0,0,0.02)] z-50">
+      <div className="min-h-[60vh] flex flex-col bg-gray-50/50">
+        {/* <div className="fixed top-0 left-0 w-full bg-white/80 backdrop-blur-2xl border-b border-gray-100 shadow-[0_2px_20px_rgba(0,0,0,0.02)] z-50">
           <div className="max-w-3xl mx-auto px-5 py-4 flex items-center gap-4">
             <button
               onClick={() => router.push("/")}
@@ -148,7 +148,7 @@ const ActiveOrder = () => {
               Active Order
             </h2>
           </div>
-        </div>
+        </div> */}
 
         <div className="flex-1 flex items-center justify-center px-4 pt-20">
           <motion.div
