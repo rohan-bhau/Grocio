@@ -6,7 +6,6 @@ import { motion, AnimatePresence } from "framer-motion";
 import { ChangeEvent, FormEvent, useState, useRef } from "react";
 import Image from "next/image";
 import axios from "axios";
-// EKHANE FIX KORA HOYECHE: FaCloudUploadAlt er bodole FiCloudUpload use kora hoyeche
 import {
   FiXCircle,
   FiPackage,
