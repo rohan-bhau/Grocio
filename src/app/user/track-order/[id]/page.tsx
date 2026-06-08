@@ -52,15 +52,18 @@ const TrackOrderPage = () => {
     longitude: 0,
   });
   const [newMessage, setNewMessage] = useState("");
-  const [messages, setMessages] = useState<IMessage[]>();
-
-  const [suggestions, setSuggestions] = useState([]);
+  const [messages, setMessages] = useState<IMessage[]>([]);
+  const [suggestions, setSuggestions] = useState<string[]>([]);
   const [loading, setLoading] = useState(false);
+
+  // id string এ convert করো
+  const idStr = id?.toString();
+  const userIdStr = userData?._id?.toString();
 
   useEffect(() => {
     const getOrder = async () => {
       try {
-        const result = await axios.get(`/api/user/get-order/${id}`);
+        const result = await axios.get(`/api/user/get-order/${idStr}`);
         setOrder(result.data);
         setUserLocation({
           latitude: result.data.address.latitude,
@@ -77,8 +80,8 @@ const TrackOrderPage = () => {
         console.log(error);
       }
     };
-    getOrder();
-  }, [userData?._id, id]);
+    if (idStr) getOrder();
+  }, [userIdStr, idStr]);
 
   useEffect(() => {
     const socket = getSocket();
@@ -99,7 +102,7 @@ const TrackOrderPage = () => {
     const socket = getSocket();
 
     const handleStatusUpdate = (data: { orderId: string; status: string }) => {
-      if (data.orderId === id?.toString()) {
+      if (data.orderId?.toString() === idStr) {
         setOrder((prev: any) => ({ ...prev, status: data.status }));
 
         if (data.status === "delivered") {
@@ -110,41 +113,56 @@ const TrackOrderPage = () => {
 
     socket.on("order-status-update", handleStatusUpdate);
     return () => socket.off("order-status-update", handleStatusUpdate);
-  // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [id]);
+  }, [idStr, router]);
 
   useEffect(() => {
+    if (!idStr) return;
+
     const socket = getSocket();
-    socket.emit("join-room", id);
-    socket.on("send-message", (message) => {
-      if (message.roomId == id) {
-        setMessages((prev) => [...(prev || []), message]);
+
+    // Room join করো
+    socket.emit("join-room", idStr);
+
+    const handleMessage = (message: any) => {
+      if (message.roomId?.toString() === idStr) {
+        setMessages((prev) => {
+          // Duplicate check
+          const alreadyExists = prev.some(
+            (m) =>
+              m.text === message.text &&
+              m.senderId?.toString() === message.senderId?.toString() &&
+              m.time === message.time,
+          );
+          if (alreadyExists) return prev;
+          return [...prev, message];
+        });
       }
-    });
+    };
+
+    socket.on("send-message", handleMessage);
+
     return () => {
-      socket.off("send-message");
+      socket.off("send-message", handleMessage);
     };
-  }, [id]);
+  }, [idStr]);
 
-  const sendMsg = () => {
-    if (!newMessage.trim()) return;
+  useEffect(() => {
+    if (!idStr) return;
 
-    const socket = getSocket();
-
-    const message = {
-      roomId: id,
-      text: newMessage,
-      senderId: userData?._id,
-      time: new Date().toLocaleTimeString([], {
-        hour: "2-digit",
-        minute: "2-digit",
-      }),
+    const getAllMessages = async () => {
+      try {
+        const result = await axios.post("/api/chat/messages", {
+          roomId: idStr,
+        });
+        setMessages(result.data || []);
+      } catch (error) {
+        console.log(error);
+      }
     };
+    getAllMessages();
+  }, [idStr]);
 
-    socket.emit("Send-message", message);
-    setNewMessage("");
-  };
-
+  //  Auto scroll
   useEffect(() => {
     chatBoxRef.current?.scrollTo({
       top: chatBoxRef.current.scrollHeight,
@@ -152,11 +170,34 @@ const TrackOrderPage = () => {
     });
   }, [messages]);
 
+  //  Send message with optimistic update
+  const sendMsg = () => {
+    if (!newMessage.trim()) return;
+
+    const socket = getSocket();
+
+    const message = {
+      roomId: idStr,
+      text: newMessage,
+      senderId: userIdStr,
+      time: new Date().toLocaleTimeString([], {
+        hour: "2-digit",
+        minute: "2-digit",
+      }),
+    };
+
+    socket.emit("Send-message", message);
+
+    //  Optimistic update
+    setMessages((prev) => [...prev, message as any]);
+    setNewMessage("");
+  };
+
   const getSuggestions = async () => {
     setLoading(true);
     try {
       const lastMessage = messages
-        ?.filter((m) => m.senderId !== userData?._id)
+        ?.filter((m) => m.senderId?.toString() !== userIdStr)
         .at(-1);
 
       if (!lastMessage?.text) {
@@ -168,26 +209,12 @@ const TrackOrderPage = () => {
         role: "user",
       });
       setSuggestions(result.data);
-      console.log(result.data);
       setLoading(false);
     } catch (error) {
       console.log(error);
       setLoading(false);
     }
   };
-
-  useEffect(() => {
-    const getAllMessages = async () => {
-      try {
-        const result = await axios.post("/api/chat/messages", { roomId: id });
-        console.log(result.data);
-        setMessages(result.data);
-      } catch (error) {
-        console.log(error);
-      }
-    };
-    getAllMessages();
-  }, [id]);
 
   if (!order) {
     return (
@@ -221,9 +248,7 @@ const TrackOrderPage = () => {
                 #{order._id.toString().slice(-8).toUpperCase()}
               </span>
               <span
-                className={`px-2 py-0.5 text-[10px] font-bold uppercase tracking-widest rounded-full ring-1 ring-inset ${getStatusStyle(
-                  order.status,
-                )}`}
+                className={`px-2 py-0.5 text-[10px] font-bold uppercase tracking-widest rounded-full ring-1 ring-inset ${getStatusStyle(order.status)}`}
               >
                 {order.status}
               </span>
@@ -232,9 +257,8 @@ const TrackOrderPage = () => {
         </div>
       </div>
 
-      {/* Main Content (Added pt-24 so content doesn't hide behind fixed header) */}
       <div className="max-w-2xl mx-auto pt-24 px-4 space-y-8">
-        {/* Live Map Section */}
+        {/* Live Map */}
         <motion.div
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
@@ -249,14 +273,14 @@ const TrackOrderPage = () => {
           </div>
         </motion.div>
 
-        {/* Chatbox Section */}
+        {/* Chat Section */}
         <motion.div
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.5, delay: 0.1 }}
           className="bg-white rounded-[2rem] shadow-[0_8px_30px_rgb(0,0,0,0.04)] border border-gray-100 flex flex-col h-[580px] overflow-hidden relative z-10"
         >
-          {/* Chat Header / Quick Replies */}
+          {/* Chat Header */}
           <div className="bg-gray-50/50 p-4 border-b border-gray-100">
             <div className="flex justify-between items-center mb-3">
               <span className="font-bold text-gray-800 text-sm tracking-tight flex items-center gap-2">
@@ -279,7 +303,6 @@ const TrackOrderPage = () => {
               </motion.button>
             </div>
 
-            {/* Suggestions Pills */}
             <AnimatePresence>
               {suggestions.length > 0 && (
                 <motion.div
@@ -304,7 +327,7 @@ const TrackOrderPage = () => {
             </AnimatePresence>
           </div>
 
-          {/* Messages Area */}
+          {/* Messages */}
           <div
             className="flex-1 overflow-y-auto p-4 space-y-4 bg-white scroll-smooth"
             ref={chatBoxRef}
@@ -317,14 +340,14 @@ const TrackOrderPage = () => {
                   animate={{ opacity: 1, y: 0, scale: 1 }}
                   transition={{ duration: 0.2 }}
                   className={`flex ${
-                    msg.senderId == userData?._id
+                    msg.senderId?.toString() === userIdStr
                       ? "justify-end"
                       : "justify-start"
                   }`}
                 >
                   <div
                     className={`px-4 py-2.5 max-w-[75%] text-sm shadow-sm ${
-                      msg.senderId === userData?._id
+                      msg.senderId?.toString() === userIdStr
                         ? "bg-[#00a850] text-white rounded-2xl rounded-br-sm"
                         : "bg-gray-100/80 text-gray-800 rounded-2xl rounded-bl-sm border border-gray-100"
                     }`}
@@ -332,7 +355,7 @@ const TrackOrderPage = () => {
                     <p className="leading-relaxed">{msg.text}</p>
                     <p
                       className={`text-[9px] font-medium mt-1 text-right ${
-                        msg.senderId === userData?._id
+                        msg.senderId?.toString() === userIdStr
                           ? "text-green-100"
                           : "text-gray-400"
                       }`}
@@ -345,7 +368,7 @@ const TrackOrderPage = () => {
             </AnimatePresence>
           </div>
 
-          {/* Input Area */}
+          {/* Input */}
           <div className="p-4 bg-white border-t border-gray-100">
             <div className="flex items-center gap-3">
               <input
@@ -369,6 +392,6 @@ const TrackOrderPage = () => {
       </div>
     </div>
   );
-};;
+};
 
 export default TrackOrderPage;

@@ -5,7 +5,7 @@ import Order from "@/models/order.model";
 import User from "@/models/user.model";
 import { NextRequest, NextResponse } from "next/server";
 
-export async function POST(
+async function handleUpdateStatus(
   req: NextRequest,
   { params }: { params: { orderId: string } },
 ) {
@@ -54,7 +54,7 @@ export async function POST(
 
       const candidates = availableDeliveryBoys.map((b) => b._id);
 
-      if (candidates.length == 0) {
+      if (candidates.length === 0) {
         await order.save();
 
         const orderOwner = order.user as any;
@@ -62,11 +62,8 @@ export async function POST(
 
         await emitEventHandlers(
           "order-status-update",
-          {
-            orderId: order._id.toString(), 
-            status: order.status,
-          },
-          userSocketId, 
+          { orderId: order._id.toString(), status: order.status },
+          userSocketId,
         );
 
         return NextResponse.json(
@@ -85,7 +82,7 @@ export async function POST(
 
       for (const boyId of candidates) {
         const boy = await User.findById(boyId);
-        if (boy.socketId) {
+        if (boy?.socketId) {
           await emitEventHandlers(
             "new-assignment",
             deliveryAssignment,
@@ -99,11 +96,9 @@ export async function POST(
         id: b._id,
         name: b.name,
         mobile: b.mobile,
-        latitude: b.location.coordinates[1],
-        longitude: b.location.coordinates[0],
+        latitude: b.location?.coordinates[1],
+        longitude: b.location?.coordinates[0],
       }));
-
-      await deliveryAssignment.populate("order");
     }
 
     await order.save();
@@ -114,12 +109,20 @@ export async function POST(
 
     await emitEventHandlers(
       "order-status-update",
-      {
-        orderId: order._id.toString(), 
-        status: order.status,
-      },
-      userSocketId, 
+      { orderId: order._id.toString(), status: order.status },
+      userSocketId,
     );
+
+    const admins = await User.find({ role: "admin" });
+    for (const admin of admins) {
+      if (admin.socketId && admin.socketId !== userSocketId) {
+        await emitEventHandlers(
+          "order-status-update",
+          { orderId: order._id.toString(), status: order.status },
+          admin.socketId,
+        );
+      }
+    }
 
     return NextResponse.json(
       {
@@ -134,4 +137,18 @@ export async function POST(
       { status: 500 },
     );
   }
+}
+
+export async function POST(
+  req: NextRequest,
+  context: { params: { orderId: string } },
+) {
+  return handleUpdateStatus(req, context);
+}
+
+export async function PATCH(
+  req: NextRequest,
+  context: { params: { orderId: string } },
+) {
+  return handleUpdateStatus(req, context);
 }

@@ -3,9 +3,13 @@ import connectDb from "@/lib/db";
 import emitEventHandlers from "@/lib/emitEventHandlers";
 import DeliveryAssignment from "@/models/deliveryAssignment.model";
 import Order from "@/models/order.model";
+import User from "@/models/user.model";
 import { NextRequest, NextResponse } from "next/server";
 
-export async function GET(req: NextRequest, { params }: { params: { id: string } }) {
+export async function GET(
+  req: NextRequest,
+  { params }: { params: { id: string } },
+) {
   try {
     await connectDb();
     const { id } = await params;
@@ -48,16 +52,42 @@ export async function GET(req: NextRequest, { params }: { params: { id: string }
     assignment.acceptedAt = new Date();
     await assignment.save();
 
-    const order = await Order.findById(assignment.order);
+    const order = await Order.findById(assignment.order).populate("user");
     if (!order) {
       return NextResponse.json({ message: "order not found" }, { status: 400 });
     }
 
     order.assignedDeliveryBoy = deliveryBoyId;
-      await order.save();
-      
-      await order.populate("assignedDeliveryBoy");
-      await emitEventHandlers("order-assigned", {orderId:order._id, assignedDeliveryBoy:order.assignedDeliveryBoy});
+    await order.save();
+
+    await order.populate("assignedDeliveryBoy");
+
+    const orderOwner = order.user as any;
+    const userSocketId = orderOwner?.socketId;
+    if (userSocketId) {
+      await emitEventHandlers(
+        "order-assigned",
+        {
+          orderId: order._id.toString(),
+          assignedDeliveryBoy: order.assignedDeliveryBoy,
+        },
+        userSocketId,
+      );
+    }
+
+    const admins = await User.find({ role: "admin" });
+    for (const admin of admins) {
+      if (admin.socketId) {
+        await emitEventHandlers(
+          "order-assigned",
+          {
+            orderId: order._id.toString(),
+            assignedDeliveryBoy: order.assignedDeliveryBoy,
+          },
+          admin.socketId,
+        );
+      }
+    }
 
     await DeliveryAssignment.updateMany(
       {

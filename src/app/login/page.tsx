@@ -1,55 +1,68 @@
 "use client";
 
-// import axios from "axios";
 import { motion } from "motion/react";
-import { signIn, useSession } from "next-auth/react";
+import { signIn } from "next-auth/react";
 import Link from "next/link";
-import { redirect } from "next/navigation";
-import { FormEvent, useState } from "react";
+import { useRouter, useSearchParams } from "next/navigation";
+import { FormEvent, Suspense, useState } from "react";
 import { BiLeaf } from "react-icons/bi";
 import { CiMail } from "react-icons/ci";
-import { FaArrowLeft, FaRegEye } from "react-icons/fa";
+import { FaRegEye } from "react-icons/fa";
 import { FcGoogle } from "react-icons/fc";
 import { FiLock, FiLogIn } from "react-icons/fi";
 import { GoEyeClosed } from "react-icons/go";
-// import { LuUserRound } from "react-icons/lu";
 
-const LoginPage = () => {
+const LoginForm = () => {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [focused, setFocused] = useState<string | null>(null);
   const [showPassword, setShowPassword] = useState(false);
   const [loading, setLoading] = useState(false);
+  const [error, setError] = useState("");
+
+  const router = useRouter();
+  const searchParams = useSearchParams();
 
   const isValid = email && password.length >= 6;
-  const session = useSession();
-  // console.log(session.data?.user);
 
   const handleLogin = async (e: FormEvent) => {
     e.preventDefault();
     setLoading(true);
+    setError("");
+
     try {
-      await signIn("credentials", {
+      // redirect: false 
+      const result = await signIn("credentials", {
         email,
         password,
+        redirect: false,
       });
-      setLoading(false);
-      redirect("/")
+
+      if (result?.error) {
+        setError("Invalid email or password. Please try again.");
+        setLoading(false);
+        return;
+      }
+
+      if (result?.ok) {
+        const callbackUrl = searchParams.get("callbackUrl") || "/";
+        router.push(callbackUrl);
+        router.refresh();
+      }
     } catch (error) {
       console.log(error);
+      setError("Something went wrong. Please try again.");
       setLoading(false);
     }
   };
 
   return (
     <div className="min-h-screen flex items-center justify-center bg-green-50 px-6">
-      {/* Card */}
       <motion.div
         initial={{ opacity: 0, y: 10 }}
         animate={{ opacity: 1, y: 0 }}
         className="w-full max-w-md bg-white rounded-2xl p-8 shadow-lg border border-gray-100"
       >
-        {/* Header */}
         <div className="text-center">
           <h1 className="text-2xl font-semibold text-gray-900">
             Welcome Back!
@@ -59,9 +72,14 @@ const LoginPage = () => {
           </p>
         </div>
 
-        {/* Form */}
+        {/*  Error message দেখাও */}
+        {error && (
+          <div className="mt-4 p-3 bg-red-50 border border-red-200 rounded-xl text-sm text-red-600 text-center font-medium">
+            {error}
+          </div>
+        )}
+
         <form onSubmit={handleLogin} className="mt-8 space-y-6">
-          {/* Floating Input Component */}
           {[
             {
               id: "email",
@@ -77,7 +95,6 @@ const LoginPage = () => {
                 <span className="absolute left-3 top-3.5 text-gray-400">
                   {field.icon}
                 </span>
-
                 <input
                   type={field.type}
                   value={field.value}
@@ -86,7 +103,6 @@ const LoginPage = () => {
                   onChange={(e) => field.setValue(e.target.value)}
                   className="peer w-full border border-gray-300 rounded-xl py-3 pl-10 pr-4 text-sm bg-transparent focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-green-500 transition"
                 />
-
                 <label
                   className={`absolute left-10 text-gray-500 text-sm transition-all
                   ${
@@ -101,21 +117,18 @@ const LoginPage = () => {
             </div>
           ))}
 
-          {/* Password */}
           <div className="relative">
             <span className="absolute left-3 top-3.5 text-gray-400">
               <FiLock />
             </span>
-
             <input
               type={showPassword ? "text" : "password"}
               value={password}
               onFocus={() => setFocused("password")}
               onBlur={() => setFocused(null)}
               onChange={(e) => setPassword(e.target.value)}
-              className="peer w-full border border-gray-300 rounded-xl py-3 pl-10 pr-10 text-sm bg-transparent  focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-green-500 transition"
+              className="peer w-full border border-gray-300 rounded-xl py-3 pl-10 pr-10 text-sm bg-transparent focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-green-500 transition"
             />
-
             <label
               className={`absolute left-10 text-gray-500 text-sm transition-all
               ${
@@ -126,7 +139,6 @@ const LoginPage = () => {
             >
               Password
             </label>
-
             {showPassword ? (
               <GoEyeClosed
                 onClick={() => setShowPassword(false)}
@@ -138,7 +150,6 @@ const LoginPage = () => {
                 className="absolute right-3 top-3.5 cursor-pointer text-gray-500"
               />
             )}
-
             {password && password.length < 6 && (
               <p className="text-xs text-red-500 mt-1">
                 Minimum 6 characters required
@@ -146,12 +157,10 @@ const LoginPage = () => {
             )}
           </div>
 
-          {/* Button */}
           <button
             type="submit"
             disabled={!isValid || loading}
-            className={`w-full py-3 rounded-xl text-sm font-medium transition-all duration-200
-            flex items-center justify-center gap-2
+            className={`w-full py-3 rounded-xl text-sm font-medium transition-all duration-200 flex items-center justify-center gap-2
             ${
               isValid
                 ? "bg-green-600 text-white hover:bg-green-700 active:scale-[0.98] shadow-sm hover:shadow-md cursor-pointer"
@@ -160,7 +169,7 @@ const LoginPage = () => {
           >
             {loading ? (
               <div className="flex gap-2 items-center">
-                <span className="w-5 h-5 border-2 border-white border-t-transparent rounded-full animate-spin"></span>{" "}
+                <span className="w-5 h-5 border-2 border-white border-t-transparent rounded-full animate-spin"></span>
                 <span>Logging in...</span>
               </div>
             ) : (
@@ -168,27 +177,24 @@ const LoginPage = () => {
             )}
           </button>
 
-          {/* Divider */}
           <div className="flex items-center gap-2 text-gray-400 text-xs">
             <span className="flex-1 h-px bg-gray-200"></span>
             OR
             <span className="flex-1 h-px bg-gray-200"></span>
           </div>
 
-          {/* Google */}
           <button
             type="button"
-            className="w-full flex items-center justify-center gap-3 py-3 border border-gray-300 rounded-xl text-sm  hover:bg-green-50 hover:border-green-300 transition cursor-pointer"
-            onClick={() => signIn("google",{callbackUrl:"/"})}
+            className="w-full flex items-center justify-center gap-3 py-3 border border-gray-300 rounded-xl text-sm hover:bg-green-50 hover:border-green-300 transition cursor-pointer"
+            onClick={() => signIn("google", { callbackUrl: "/" })}
           >
             <FcGoogle />
             Continue with Google
           </button>
         </form>
 
-        {/* Footer */}
         <p className="text-center text-xs text-gray-500 mt-6">
-          Don't have an account?{" "}
+          Don&apos;t have an account?{" "}
           <Link
             href={"/register"}
             className="text-green-600 hover:text-green-700 hover:underline underline-offset-2 cursor-pointer inline-flex items-center gap-1"
@@ -198,6 +204,20 @@ const LoginPage = () => {
         </p>
       </motion.div>
     </div>
+  );
+};
+
+const LoginPage = () => {
+  return (
+    <Suspense
+      fallback={
+        <div className="min-h-screen flex items-center justify-center bg-green-50">
+          <div className="w-8 h-8 border-4 border-green-600 border-t-transparent rounded-full animate-spin" />
+        </div>
+      }
+    >
+      <LoginForm />
+    </Suspense>
   );
 };
 

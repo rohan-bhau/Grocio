@@ -17,33 +17,81 @@ type props = {
 
 const DeliveryChat = ({ orderId, deliveryBoyId }: props) => {
   const [newMessage, setNewMessage] = useState("");
-  const [messages, setMessages] = useState<IMessage[]>();
+  const [messages, setMessages] = useState<IMessage[]>([]);
   const [loading, setLoading] = useState(false);
-
   const chatBoxRef = useRef<HTMLDivElement>(null);
+  const [suggestions, setSuggestions] = useState<string[]>([]);
 
-  const [suggestions, setSuggestions] = useState([]);
+  const orderIdStr = orderId?.toString();
+  const deliveryBoyIdStr = deliveryBoyId?.toString();
 
+  //  Socket room join এবং message listener
   useEffect(() => {
+    if (!orderIdStr) return;
+
     const socket = getSocket();
-    socket.emit("join-room", orderId);
-    socket.on("send-message", (message) => {
-      if (message.roomId == orderId) {
-        setMessages((prev) => [...prev!, message]);
+
+    // Room join করো
+    socket.emit("join-room", orderIdStr);
+
+    const handleMessage = (message: any) => {
+      // roomId properly compare
+      if (message.roomId?.toString() === orderIdStr) {
+        setMessages((prev) => {
+          // Duplicate check — optimistic update এর সাথে clash এড়াতে
+          const alreadyExists = prev.some(
+            (m) =>
+              m.text === message.text &&
+              m.senderId?.toString() === message.senderId?.toString() &&
+              m.time === message.time,
+          );
+          if (alreadyExists) return prev;
+          return [...prev, message];
+        });
       }
-    });
-    return () => {
-      socket.off("send-message");
     };
-  }, []);
+
+    socket.on("send-message", handleMessage);
+
+    return () => {
+      socket.off("send-message", handleMessage);
+    };
+  }, [orderIdStr]);
+
+  // Previous messages load
+  useEffect(() => {
+    if (!orderIdStr) return;
+
+    const getAllMessages = async () => {
+      try {
+        const result = await axios.post("/api/chat/messages", {
+          roomId: orderIdStr,
+        });
+        setMessages(result.data || []);
+      } catch (error) {
+        console.log(error);
+      }
+    };
+    getAllMessages();
+  }, [orderIdStr]);
+
+  // Auto scroll
+  useEffect(() => {
+    chatBoxRef.current?.scrollTo({
+      top: chatBoxRef.current.scrollHeight,
+      behavior: "smooth",
+    });
+  }, [messages]);
 
   const sendMsg = () => {
+    if (!newMessage.trim()) return;
+
     const socket = getSocket();
 
     const message = {
-      roomId: orderId,
+      roomId: orderIdStr,
       text: newMessage,
-      senderId: deliveryBoyId,
+      senderId: deliveryBoyIdStr,
       time: new Date().toLocaleTimeString([], {
         hour: "2-digit",
         minute: "2-digit",
@@ -52,44 +100,22 @@ const DeliveryChat = ({ orderId, deliveryBoyId }: props) => {
 
     socket.emit("Send-message", message);
 
+    setMessages((prev) => [...prev, message as any]);
     setNewMessage("");
   };
-
-  useEffect(() => {
-    chatBoxRef.current?.scrollTo({
-      top: chatBoxRef.current.scrollHeight,
-      behavior: "smooth",
-    });
-  }, [messages]);
-
-  useEffect(() => {
-    const getAllMessages = async () => {
-      try {
-        const result = await axios.post("/api/chat/messages", {
-          roomId: orderId,
-        });
-        console.log(result.data);
-        setMessages(result.data);
-      } catch (error) {
-        console.log(error);
-      }
-    };
-    getAllMessages();
-  }, []);
 
   const getSuggestions = async () => {
     setLoading(true);
     try {
       const lastMessage = messages
-        ?.filter((m) => m.senderId !== deliveryBoyId)
+        ?.filter((m) => m.senderId?.toString() !== deliveryBoyIdStr)
         .at(-1);
-      console.log(lastMessage?.text)
+
       const result = await axios.post("/api/chat/ai-suggesstions", {
         message: lastMessage?.text || "Hi",
         role: "delivery_boy",
       });
-        setSuggestions(result.data);
-        console.log(result.data)
+      setSuggestions(result.data);
       setLoading(false);
     } catch (error) {
       console.log(error);
@@ -99,7 +125,7 @@ const DeliveryChat = ({ orderId, deliveryBoyId }: props) => {
 
   return (
     <div className="flex flex-col h-[500px] md:h-[550px] w-full bg-white">
-      {/* Chat Header / AI Quick Replies */}
+      {/* Chat Header */}
       <div className="bg-gray-50/50 p-4 border-b border-gray-100">
         <div className="flex justify-between items-center mb-3">
           <span className="font-bold text-gray-800 text-sm tracking-tight flex items-center gap-2">
@@ -122,7 +148,6 @@ const DeliveryChat = ({ orderId, deliveryBoyId }: props) => {
           </motion.button>
         </div>
 
-        {/* Suggestions Pills */}
         <AnimatePresence>
           {suggestions.length > 0 && (
             <motion.div
@@ -160,12 +185,14 @@ const DeliveryChat = ({ orderId, deliveryBoyId }: props) => {
               animate={{ opacity: 1, y: 0, scale: 1 }}
               transition={{ duration: 0.2 }}
               className={`flex ${
-                msg.senderId == deliveryBoyId ? "justify-end" : "justify-start"
+                msg.senderId?.toString() === deliveryBoyIdStr
+                  ? "justify-end"
+                  : "justify-start"
               }`}
             >
               <div
                 className={`px-4 py-2.5 max-w-[75%] text-sm shadow-sm ${
-                  msg.senderId == deliveryBoyId
+                  msg.senderId?.toString() === deliveryBoyIdStr
                     ? "bg-[#00a850] text-white rounded-2xl rounded-br-sm"
                     : "bg-gray-100/80 text-gray-800 rounded-2xl rounded-bl-sm border border-gray-100"
                 }`}
@@ -173,7 +200,7 @@ const DeliveryChat = ({ orderId, deliveryBoyId }: props) => {
                 <p className="leading-relaxed">{msg.text}</p>
                 <p
                   className={`text-[9px] font-medium mt-1 text-right ${
-                    msg.senderId == deliveryBoyId
+                    msg.senderId?.toString() === deliveryBoyIdStr
                       ? "text-green-100"
                       : "text-gray-400"
                   }`}

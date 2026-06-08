@@ -5,7 +5,7 @@
 /* eslint-disable react-hooks/immutability */
 "use client";
 
-import { RootState } from "@/redux/store";
+import { AppDispatch, RootState } from "@/redux/store";
 import { motion, AnimatePresence } from "framer-motion";
 import { useRouter } from "next/navigation";
 import { useEffect, useState, useRef, useMemo } from "react";
@@ -19,32 +19,30 @@ import {
   FiMap,
   FiCheckCircle,
 } from "react-icons/fi";
-import { useSelector } from "react-redux";
+import { useDispatch, useSelector } from "react-redux";
 import "leaflet/dist/leaflet.css";
 
-// Dynamic imports to prevent Next.js SSR "window is not defined" error with Leaflet
 import { MapContainer, Marker, TileLayer, useMap } from "react-leaflet";
 import { TbCurrentLocation } from "react-icons/tb";
 import { ImCreditCard } from "react-icons/im";
 import { FaTruckMoving } from "react-icons/fa6";
 import axios from "axios";
+import { clearCart } from "@/redux/cartSlice";
 
 const CheckoutPage = () => {
   const router = useRouter();
+  const dispatch = useDispatch<AppDispatch>();
   const { userData } = useSelector((state: RootState) => state.user);
-  const { subTotal, deliveryFee, total,cartData } = useSelector(
+  const { subTotal, deliveryFee, total, cartData } = useSelector(
     (state: RootState) => state.cart,
   );
 
   const [isMounted, setIsMounted] = useState(false);
-
   const [markerPosition, setMarkerPosition] = useState<[number, number] | null>(
     null,
   );
   const [mapCenter, setMapCenter] = useState<[number, number] | null>(null);
-
   const [markerIcon, setMarkerIcon] = useState<any>(null);
-
   const [searchQuery, setSearchQuery] = useState("");
   const [suggestions, setSuggestions] = useState<any[]>([]);
   const [showSuggestions, setShowSuggestions] = useState(false);
@@ -107,9 +105,7 @@ const CheckoutPage = () => {
     const delayDebounceFn = setTimeout(() => {
       if (searchQuery.length > 2) {
         fetch(
-          `https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(
-            searchQuery,
-          )}&limit=5&addressdetails=1`,
+          `https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(searchQuery)}&limit=5&addressdetails=1`,
           { headers: { "Accept-Language": "en-US,en" } },
         )
           .then((res) => res.json())
@@ -245,85 +241,77 @@ const CheckoutPage = () => {
     ) : null;
   };
 
-    // Checkout Handler (Stripe/COD logic here)
-    // cash on delivery
-  const handleCod = async() => {
+  const handleCod = async () => {
     if (!address.fullAddress || !markerPosition) {
       alert("Please map your delivery location first!");
       return;
-      }
-      try {
-          const result = await axios.post("/api/user/order", {
-            userId: userData?._id,
-            items: cartData.map((item) => ({
-              grocery: item._id,
-              name: item.name,
-              price: item.price,
-              unit: item.unit,
-              image: item.image,
-              quantity: item.quantity,
-            })),
-            totalAmount: total,
-            address: {
-              fullName: address.fullName,
-              mobile: address.mobile,
-              city: address.city,
-              state: address.state,
-              postalCode: address.postalCode,
-              fullAddress: address.fullAddress,
-              latitude: markerPosition[0],
-              longitude: markerPosition[1]
-              },
-            paymentMethod,
-          });
-          console.log(result.data)
-          router.push("/user/order-success")
-      } catch (error) {
-        console.log(error)
-      }
+    }
+    try {
+      await axios.post("/api/user/order", {
+        userId: userData?._id,
+        items: cartData.map((item) => ({
+          grocery: item._id,
+          name: item.name,
+          price: item.price,
+          unit: item.unit,
+          image: item.image,
+          quantity: item.quantity,
+        })),
+        totalAmount: total,
+        address: {
+          fullName: address.fullName,
+          mobile: address.mobile,
+          city: address.city,
+          state: address.state,
+          postalCode: address.postalCode,
+          fullAddress: address.fullAddress,
+          latitude: markerPosition[0],
+          longitude: markerPosition[1],
+        },
+        paymentMethod,
+      });
+      dispatch(clearCart());
+      router.push("/user/order-success");
+    } catch (error) {
+      console.log(error);
+    }
+  };
 
-
-    };
-    // console.log(markerPosition)
-
-    // online payment
-    
-    const handleOnlineOrder = async() => {
-            if (!address.fullAddress || !markerPosition) {
-              alert("Please map your delivery location first!");
-              return;
-            }    
-        
-        try {
-            const result = await axios.post("/api/user/payment", {
-              userId: userData?._id,
-              items: cartData.map((item) => ({
-                grocery: item._id,
-                name: item.name,
-                price: item.price,
-                unit: item.unit,
-                image: item.image,
-                quantity: item.quantity,
-              })),
-              totalAmount: total,
-              address: {
-                fullName: address.fullName,
-                mobile: address.mobile,
-                city: address.city,
-                state: address.state,
-                postalCode: address.postalCode,
-                fullAddress: address.fullAddress,
-                latitude: markerPosition[0],
-                longitude: markerPosition[1],
-              },
-                paymentMethod,
-            });
-            window.location.href=result.data.url
-        } catch (error) {
-            console.log(error)
-        }
-
-          };
+  const handleOnlineOrder = async () => {
+    if (!address.fullAddress || !markerPosition) {
+      alert("Please map your delivery location first!");
+      return;
+    }
+    try {
+      const result = await axios.post("/api/user/payment", {
+        userId: userData?._id,
+        items: cartData.map((item) => ({
+          grocery: item._id,
+          name: item.name,
+          price: item.price,
+          unit: item.unit,
+          image: item.image,
+          quantity: item.quantity,
+        })),
+        totalAmount: total,
+        address: {
+          fullName: address.fullName,
+          mobile: address.mobile,
+          city: address.city,
+          state: address.state,
+          postalCode: address.postalCode,
+          fullAddress: address.fullAddress,
+          latitude: markerPosition[0],
+          longitude: markerPosition[1],
+        },
+        paymentMethod,
+      });
+      dispatch(clearCart());
+      window.location.href = result.data.url;
+    } catch (error) {
+      console.log(error);
+    }
+  };
 
   const inputClass =
     "w-full border-b-2 border-gray-100 bg-transparent py-2.5 text-sm text-gray-800 placeholder-gray-400 focus:border-[#00a850] focus:outline-none transition-colors";
@@ -576,9 +564,6 @@ const CheckoutPage = () => {
             </div>
           </motion.div>
 
-          {/* ========================================== */}
-          {/* UPDATED PAYMENT & ORDER SUMMARY SECTION */}
-          {/* ========================================== */}
           <motion.div
             initial={{ opacity: 0, x: 20 }}
             animate={{ opacity: 1, x: 0 }}
@@ -611,11 +596,7 @@ const CheckoutPage = () => {
                       }
                     />
                     <span
-                      className={`font-semibold text-sm ${
-                        paymentMethod === "online"
-                          ? "text-[#00a850]"
-                          : "text-gray-600"
-                      }`}
+                      className={`font-semibold text-sm ${paymentMethod === "online" ? "text-[#00a850]" : "text-gray-600"}`}
                     >
                       Pay Online (Stripe)
                     </span>
@@ -642,11 +623,7 @@ const CheckoutPage = () => {
                       }
                     />
                     <span
-                      className={`font-semibold text-sm ${
-                        paymentMethod === "cod"
-                          ? "text-[#00a850]"
-                          : "text-gray-600"
-                      }`}
+                      className={`font-semibold text-sm ${paymentMethod === "cod" ? "text-[#00a850]" : "text-gray-600"}`}
                     >
                       Cash on Delivery
                     </span>
@@ -657,7 +634,7 @@ const CheckoutPage = () => {
                 </button>
               </div>
 
-              <div className="space-y-3 text-sm text-gray-600 border-y  border-gray-100 pb-4 pt-4 mb-4">
+              <div className="space-y-3 text-sm text-gray-600 border-y border-gray-100 pb-4 pt-4 mb-4">
                 <div className="flex justify-between">
                   <span>Subtotal</span>
                   <span className="font-semibold text-gray-800">
@@ -680,12 +657,12 @@ const CheckoutPage = () => {
               </div>
 
               <button
-                              onClick={() => {
-                                  if (paymentMethod == "cod") {
-                                      handleCod()
-                                  } else {
-                                      handleOnlineOrder()
-                                  }
+                onClick={() => {
+                  if (paymentMethod === "cod") {
+                    handleCod();
+                  } else {
+                    handleOnlineOrder();
+                  }
                 }}
                 className="w-full bg-[#00a850] hover:bg-green-700 text-white text-sm font-bold py-4 rounded-xl transition-all shadow-[0_4px_14px_rgba(0,168,80,0.3)] hover:shadow-[0_6px_20px_rgba(0,168,80,0.4)] active:scale-[0.98] flex items-center justify-center gap-2 uppercase tracking-wide"
               >
