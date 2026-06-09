@@ -60,7 +60,9 @@ const DeliveryRequest = () => {
 
     socket.on("new-assignment", handleNewAssignment);
 
-    return () => socket.off("new-assignment", handleNewAssignment);
+    return () => {
+      socket.off("new-assignment", handleNewAssignment);
+    };
   }, []);
 
   const formatTime = (dateString: string) => {

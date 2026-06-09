@@ -86,13 +86,15 @@ const UserOrderCard = ({ order }: { order: IOrder }) => {
       status: string;
     }) => {
       if (data.orderId.toString() == order?._id!.toString()) {
-        setStatus(data.status);
+        setStatus(data.status as "pending" | "out of delivery" | "delivered");
       }
     };
 
     socket.on("order-status-update", handleStatusUpdate);
 
-    return () => socket.off("order-status-update", handleStatusUpdate);
+    return () => {
+      socket.off("order-status-update", handleStatusUpdate);
+    };
   }, [order._id]);
 
   return (

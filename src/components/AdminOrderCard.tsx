@@ -76,7 +76,9 @@ export const AdminOrderCard = ({
     };
 
     socket.on("order-status-update", handleStatusUpdate);
-    return () => socket.off("order-status-update", handleStatusUpdate);
+    return () => {
+      socket.off("order-status-update", handleStatusUpdate);
+    };
   }, [order._id]);
 
   const handleStatusUpdate = async (orderId: string, status: string) => {

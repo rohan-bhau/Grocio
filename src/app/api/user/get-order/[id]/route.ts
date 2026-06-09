@@ -4,11 +4,11 @@ import { NextRequest, NextResponse } from "next/server";
 
 export async function GET(
   req: NextRequest,
-  { params }: { params: { id: string } },
+  context: { params: Promise<{ id: string }> },
 ) {
   try {
     await connectDb();
-    const { id } = await params; // ← fix
+    const { id } = await context.params; // ← fix
     const order = await Order.findById(id).populate("assignedDeliveryBoy");
 
     if (!order) {

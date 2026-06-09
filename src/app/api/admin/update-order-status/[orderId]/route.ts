@@ -7,11 +7,11 @@ import { NextRequest, NextResponse } from "next/server";
 
 async function handleUpdateStatus(
   req: NextRequest,
-  { params }: { params: { orderId: string } },
+  context: { params: Promise<{ orderId: string }> },
 ) {
   try {
     await connectDb();
-    const { orderId } = await params;
+    const { orderId } = await context.params;
     const { status } = await req.json();
 
     const order = await Order.findById(orderId).populate("user");
@@ -150,14 +150,14 @@ async function handleUpdateStatus(
 
 export async function POST(
   req: NextRequest,
-  context: { params: { orderId: string } },
+  context: { params: Promise<{ orderId: string }> },
 ) {
   return handleUpdateStatus(req, context);
 }
 
 export async function PATCH(
   req: NextRequest,
-  context: { params: { orderId: string } },
+  context: { params: Promise<{ orderId: string }> },
 ) {
   return handleUpdateStatus(req, context);
 }

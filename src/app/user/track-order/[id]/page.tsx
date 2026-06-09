@@ -91,8 +91,9 @@ const TrackOrderPage = () => {
       });
     };
     socket.on("update-deliveryBoy-location", handleLocationUpdate);
-    return () =>
+    return () => {
       socket.off("update-deliveryBoy-location", handleLocationUpdate);
+    };
   }, []);
 
   // Listen for order status changes in realtime
@@ -107,7 +108,9 @@ const TrackOrderPage = () => {
       }
     };
     socket.on("order-status-update", handleStatusUpdate);
-    return () => socket.off("order-status-update", handleStatusUpdate);
+    return () => {
+      socket.off("order-status-update", handleStatusUpdate);
+    };
   }, [idStr, router]);
 
   // Join the chat room and listen for new messages

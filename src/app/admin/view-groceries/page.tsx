@@ -179,7 +179,7 @@ const ViewGroceryPage = () => {
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
           {filteredGroceries.map((g, i) => (
             <m.div
-              key={g._id || i}
+              key={i}
               initial={{ opacity: 0, y: 15 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ duration: 0.3, delay: i * 0.03 }}
@@ -415,7 +415,7 @@ const ViewGroceryPage = () => {
                       onChange={(e) =>
                         setEditing({
                           ...editing,
-                          price: Number(e.target.value),
+                          price: (e.target.value),
                         })
                       }
                       className={`${inputClass} pl-12`}

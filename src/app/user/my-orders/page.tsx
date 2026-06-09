@@ -93,7 +93,7 @@ useEffect(() => {
     socket.on("connect", handleConnect);
   }
 
-  const handleStatusUpdate = (data: { orderId: string; status: string }) => {
+  const handleStatusUpdate = (data: { orderId: string; status: "pending" | "out of delivery" | "delivered" }) => {
     setOrders((prev) =>
       prev.map((order) =>
         order._id?.toString() === data.orderId.toString()
