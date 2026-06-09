@@ -1,21 +1,21 @@
 "use client";
+
 import { getSocket } from "@/lib/socket";
 import { IMessage } from "@/models/message.model";
 import axios from "axios";
 import mongoose from "mongoose";
-import { AnimatePresence } from "motion/react";
+import { AnimatePresence, motion } from "motion/react";
 import { useEffect, useRef, useState } from "react";
 import { BiSend } from "react-icons/bi";
-import { motion } from "motion/react";
 import { HiOutlineSparkles } from "react-icons/hi";
 import { LuLoader } from "react-icons/lu";
 
-type props = {
+type Props = {
   orderId: mongoose.Types.ObjectId;
   deliveryBoyId: mongoose.Types.ObjectId;
 };
 
-const DeliveryChat = ({ orderId, deliveryBoyId }: props) => {
+const DeliveryChat = ({ orderId, deliveryBoyId }: Props) => {
   const [newMessage, setNewMessage] = useState("");
   const [messages, setMessages] = useState<IMessage[]>([]);
   const [loading, setLoading] = useState(false);
@@ -25,43 +25,37 @@ const DeliveryChat = ({ orderId, deliveryBoyId }: props) => {
   const orderIdStr = orderId?.toString();
   const deliveryBoyIdStr = deliveryBoyId?.toString();
 
-  //  Socket room join এবং message listener
+  // Join the chat room and listen for incoming messages
   useEffect(() => {
     if (!orderIdStr) return;
-
     const socket = getSocket();
-
-    // Room join করো
     socket.emit("join-room", orderIdStr);
 
     const handleMessage = (message: any) => {
-      // roomId properly compare
       if (message.roomId?.toString() === orderIdStr) {
         setMessages((prev) => {
-          // Duplicate check — optimistic update এর সাথে clash এড়াতে
-          const alreadyExists = prev.some(
+          // Prevent duplicate messages from optimistic update
+          const exists = prev.some(
             (m) =>
               m.text === message.text &&
               m.senderId?.toString() === message.senderId?.toString() &&
               m.time === message.time,
           );
-          if (alreadyExists) return prev;
+          if (exists) return prev;
           return [...prev, message];
         });
       }
     };
 
     socket.on("send-message", handleMessage);
-
     return () => {
       socket.off("send-message", handleMessage);
     };
   }, [orderIdStr]);
 
-  // Previous messages load
+  // Load all previous messages from the database on mount
   useEffect(() => {
     if (!orderIdStr) return;
-
     const getAllMessages = async () => {
       try {
         const result = await axios.post("/api/chat/messages", {
@@ -69,13 +63,13 @@ const DeliveryChat = ({ orderId, deliveryBoyId }: props) => {
         });
         setMessages(result.data || []);
       } catch (error) {
-        console.log(error);
+        console.log("load messages error:", error);
       }
     };
     getAllMessages();
   }, [orderIdStr]);
 
-  // Auto scroll
+  // Auto scroll to the bottom whenever messages change
   useEffect(() => {
     chatBoxRef.current?.scrollTo({
       top: chatBoxRef.current.scrollHeight,
@@ -85,7 +79,6 @@ const DeliveryChat = ({ orderId, deliveryBoyId }: props) => {
 
   const sendMsg = () => {
     if (!newMessage.trim()) return;
-
     const socket = getSocket();
 
     const message = {
@@ -98,8 +91,10 @@ const DeliveryChat = ({ orderId, deliveryBoyId }: props) => {
       }),
     };
 
+    // Emit to socket server which will save to DB and broadcast to room
     socket.emit("Send-message", message);
 
+    // Show the message immediately for the sender without waiting for socket echo
     setMessages((prev) => [...prev, message as any]);
     setNewMessage("");
   };
@@ -110,22 +105,21 @@ const DeliveryChat = ({ orderId, deliveryBoyId }: props) => {
       const lastMessage = messages
         ?.filter((m) => m.senderId?.toString() !== deliveryBoyIdStr)
         .at(-1);
-
       const result = await axios.post("/api/chat/ai-suggesstions", {
         message: lastMessage?.text || "Hi",
         role: "delivery_boy",
       });
       setSuggestions(result.data);
-      setLoading(false);
     } catch (error) {
-      console.log(error);
+      console.log("get suggestions error:", error);
+    } finally {
       setLoading(false);
     }
   };
 
   return (
     <div className="flex flex-col h-[500px] md:h-[550px] w-full bg-white">
-      {/* Chat Header */}
+      {/* Header with AI suggest button */}
       <div className="bg-gray-50/50 p-4 border-b border-gray-100">
         <div className="flex justify-between items-center mb-3">
           <span className="font-bold text-gray-800 text-sm tracking-tight flex items-center gap-2">
@@ -148,6 +142,7 @@ const DeliveryChat = ({ orderId, deliveryBoyId }: props) => {
           </motion.button>
         </div>
 
+        {/* AI suggestion pills */}
         <AnimatePresence>
           {suggestions.length > 0 && (
             <motion.div
@@ -172,7 +167,7 @@ const DeliveryChat = ({ orderId, deliveryBoyId }: props) => {
         </AnimatePresence>
       </div>
 
-      {/* Messages Area */}
+      {/* Messages list */}
       <div
         className="flex-1 overflow-y-auto p-4 space-y-4 bg-white scroll-smooth"
         ref={chatBoxRef}
@@ -184,11 +179,7 @@ const DeliveryChat = ({ orderId, deliveryBoyId }: props) => {
               initial={{ opacity: 0, y: 10, scale: 0.95 }}
               animate={{ opacity: 1, y: 0, scale: 1 }}
               transition={{ duration: 0.2 }}
-              className={`flex ${
-                msg.senderId?.toString() === deliveryBoyIdStr
-                  ? "justify-end"
-                  : "justify-start"
-              }`}
+              className={`flex ${msg.senderId?.toString() === deliveryBoyIdStr ? "justify-end" : "justify-start"}`}
             >
               <div
                 className={`px-4 py-2.5 max-w-[75%] text-sm shadow-sm ${
@@ -199,11 +190,7 @@ const DeliveryChat = ({ orderId, deliveryBoyId }: props) => {
               >
                 <p className="leading-relaxed">{msg.text}</p>
                 <p
-                  className={`text-[9px] font-medium mt-1 text-right ${
-                    msg.senderId?.toString() === deliveryBoyIdStr
-                      ? "text-green-100"
-                      : "text-gray-400"
-                  }`}
+                  className={`text-[9px] font-medium mt-1 text-right ${msg.senderId?.toString() === deliveryBoyIdStr ? "text-green-100" : "text-gray-400"}`}
                 >
                   {msg.time}
                 </p>
@@ -213,7 +200,7 @@ const DeliveryChat = ({ orderId, deliveryBoyId }: props) => {
         </AnimatePresence>
       </div>
 
-      {/* Input Area */}
+      {/* Message input */}
       <div className="p-4 bg-white border-t border-gray-100">
         <div className="flex items-center gap-3">
           <input
@@ -225,7 +212,7 @@ const DeliveryChat = ({ orderId, deliveryBoyId }: props) => {
             className="flex-1 bg-gray-50 border border-gray-200 px-4 py-3 rounded-xl outline-none focus:bg-white focus:border-[#00a850] focus:ring-4 focus:ring-green-50 transition-all text-sm font-medium placeholder-gray-400"
           />
           <button
-            className="bg-[#00a850] hover:bg-green-600 p-3.5 rounded-xl text-white shadow-[0_4px_14px_rgba(0,168,80,0.3)] hover:shadow-[0_6px_20px_rgba(0,168,80,0.4)] transition-all active:scale-95 flex items-center justify-center cursor-pointer outline-none disabled:opacity-50 disabled:cursor-not-allowed"
+            className="bg-[#00a850] hover:bg-green-600 p-3.5 rounded-xl text-white shadow-[0_4px_14px_rgba(0,168,80,0.3)] transition-all active:scale-95 flex items-center justify-center cursor-pointer outline-none disabled:opacity-50 disabled:cursor-not-allowed"
             onClick={sendMsg}
             disabled={!newMessage.trim()}
           >

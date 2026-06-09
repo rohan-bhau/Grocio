@@ -10,11 +10,9 @@ export const getSocket = () => {
       reconnectionDelay: 1000,
     });
   }
-
   if (!socket.connected) {
     socket.connect();
   }
-
   return socket;
 };
 

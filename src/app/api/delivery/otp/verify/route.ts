@@ -19,31 +19,33 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ message: "Invalid OTP" }, { status: 400 });
     }
 
+    // Mark the order as delivered
     order.deliveryOtpVerification = true;
     order.status = "delivered";
     order.deliveredAt = new Date();
     order.deliveryOtp = null;
     await order.save();
 
+    // Mark the delivery assignment as completed
     await DeliveryAssignment.findOneAndUpdate(
       { order: order._id },
       { status: "completed" },
     );
 
+    // Notify the user that their order has been delivered
     const orderOwner = order.user as any;
-    const userSocketId = orderOwner?.socketId;
-
-    if (userSocketId) {
+    if (orderOwner?.socketId) {
       await emitEventHandlers(
         "order-status-update",
         {
           orderId: order._id.toString(),
           status: "delivered",
         },
-        userSocketId,
+        orderOwner.socketId,
       );
     }
 
+    // Notify all admins that the order was delivered
     const admins = await User.find({ role: "admin" });
     for (const admin of admins) {
       if (admin.socketId) {

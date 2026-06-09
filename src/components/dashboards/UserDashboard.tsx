@@ -1,31 +1,21 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
-import HeroSection from '../HeroSection'
-import CategorySlider from '../CategorySlider'
-import connectDb from '@/lib/db'
-import Grocery from '@/models/grocery.model'
-import GroceryItemCard from '../GroceryItemCard'
+import HeroSection from "../HeroSection";
+import CategorySlider from "../CategorySlider";
+import connectDb from "@/lib/db";
+import Grocery from "@/models/grocery.model";
+import UserDashboardClient from "../UserDashboardClient";
 
 const UserDashboard = async () => {
-  await connectDb()
-  const groceries = await Grocery.find({})
-  const plainGroceries = JSON.parse(JSON.stringify(groceries))
+  await connectDb();
+  const groceries = await Grocery.find({});
+  const plainGroceries = JSON.parse(JSON.stringify(groceries));
   return (
     <div>
       <HeroSection />
       <CategorySlider />
-
-      <div className="w-[90%] md:w-[80%] mx-auto mt-10">
-        <h2 className="text-2xl md:text-3xl font-extrabold text-gray-800 tracking-tight mb-6">
-         Popular Grocery Items
-        </h2>
-        <div className='grid grid-cols-1 sm:grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6'>
-          {plainGroceries.map((item: any) => (
-            <GroceryItemCard key={item._id} item={item} />
-          ))}
-        </div>
-      </div>
+      <UserDashboardClient groceries={plainGroceries} />
     </div>
   );
-}
+};
 
-export default UserDashboard
+export default UserDashboard;

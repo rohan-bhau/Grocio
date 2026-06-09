@@ -13,15 +13,15 @@ async function handleUpdateStatus(
     await connectDb();
     const { orderId } = await params;
     const { status } = await req.json();
+
     const order = await Order.findById(orderId).populate("user");
     if (!order) {
       return NextResponse.json({ message: "order not found" }, { status: 400 });
     }
 
     order.status = status;
-
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    let deliveryBoysPayload: any = [];
+    let deliveryBoysPayload: any[] = [];
 
     if (status === "out of delivery" && !order.assignment) {
       const { latitude, longitude } = order.address;
@@ -47,25 +47,25 @@ async function handleUpdateStatus(
       }).distinct("assignedTo");
 
       const busyIdSet = new Set(busyIds.map((b) => String(b)));
-
       const availableDeliveryBoys = nearByDeliveryBoys.filter(
         (b) => !busyIdSet.has(String(b._id)),
       );
-
       const candidates = availableDeliveryBoys.map((b) => b._id);
 
       if (candidates.length === 0) {
         await order.save();
-
+        // Notify user even when no delivery boy is available
         const orderOwner = order.user as any;
-        const userSocketId = orderOwner?.socketId;
-
-        await emitEventHandlers(
-          "order-status-update",
-          { orderId: order._id.toString(), status: order.status },
-          userSocketId,
-        );
-
+        if (orderOwner?.socketId) {
+          await emitEventHandlers(
+            "order-status-update",
+            {
+              orderId: order._id.toString(),
+              status: order.status,
+            },
+            orderOwner.socketId,
+          );
+        }
         return NextResponse.json(
           { message: "Delivery boy not found" },
           { status: 200 },
@@ -77,9 +77,9 @@ async function handleUpdateStatus(
         broadcastedTo: candidates,
         status: "broadcasted",
       });
-
       await deliveryAssignment.populate("order");
 
+      // Notify each available delivery boy about the new assignment
       for (const boyId of candidates) {
         const boy = await User.findById(boyId);
         if (boy?.socketId) {
@@ -96,8 +96,8 @@ async function handleUpdateStatus(
         id: b._id,
         name: b.name,
         mobile: b.mobile,
-        latitude: b.location?.coordinates[1],
-        longitude: b.location?.coordinates[0],
+        latitude: b.location?.coordinates?.[1],
+        longitude: b.location?.coordinates?.[0],
       }));
     }
 
@@ -105,20 +105,29 @@ async function handleUpdateStatus(
     await order.populate("user");
 
     const orderOwner = order.user as any;
-    const userSocketId = orderOwner?.socketId;
 
-    await emitEventHandlers(
-      "order-status-update",
-      { orderId: order._id.toString(), status: order.status },
-      userSocketId,
-    );
+    // Notify the user about the order status change
+    if (orderOwner?.socketId) {
+      await emitEventHandlers(
+        "order-status-update",
+        {
+          orderId: order._id.toString(),
+          status: order.status,
+        },
+        orderOwner.socketId,
+      );
+    }
 
+    // Notify all admins about the order status change
     const admins = await User.find({ role: "admin" });
     for (const admin of admins) {
-      if (admin.socketId && admin.socketId !== userSocketId) {
+      if (admin.socketId) {
         await emitEventHandlers(
           "order-status-update",
-          { orderId: order._id.toString(), status: order.status },
+          {
+            orderId: order._id.toString(),
+            status: order.status,
+          },
           admin.socketId,
         );
       }

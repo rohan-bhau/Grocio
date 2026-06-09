@@ -41,7 +41,7 @@ const RegisterForm = ({ previousStep }: propType) => {
       });
       // console.log(result.data);
       setLoading(false)
-      redirect("/")
+      redirect("/logion")
     } catch (error) {
       console.log(error);
       setLoading(false)

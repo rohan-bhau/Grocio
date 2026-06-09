@@ -22,35 +22,31 @@ const LoginForm = () => {
 
   const router = useRouter();
   const searchParams = useSearchParams();
-
   const isValid = email && password.length >= 6;
 
   const handleLogin = async (e: FormEvent) => {
     e.preventDefault();
     setLoading(true);
     setError("");
-
     try {
-      // redirect: false 
+      // Using redirect false so we can handle the result manually
       const result = await signIn("credentials", {
         email,
         password,
         redirect: false,
       });
-
       if (result?.error) {
         setError("Invalid email or password. Please try again.");
         setLoading(false);
         return;
       }
-
       if (result?.ok) {
         const callbackUrl = searchParams.get("callbackUrl") || "/";
         router.push(callbackUrl);
         router.refresh();
       }
-    } catch (error) {
-      console.log(error);
+    } catch (err) {
+      console.log("login error:", err);
       setError("Something went wrong. Please try again.");
       setLoading(false);
     }
@@ -72,7 +68,6 @@ const LoginForm = () => {
           </p>
         </div>
 
-        {/*  Error message দেখাও */}
         {error && (
           <div className="mt-4 p-3 bg-red-50 border border-red-200 rounded-xl text-sm text-red-600 text-center font-medium">
             {error}
@@ -80,42 +75,24 @@ const LoginForm = () => {
         )}
 
         <form onSubmit={handleLogin} className="mt-8 space-y-6">
-          {[
-            {
-              id: "email",
-              label: "Email address",
-              icon: <CiMail />,
-              type: "email",
-              value: email,
-              setValue: setEmail,
-            },
-          ].map((field) => (
-            <div key={field.id} className="relative">
-              <div className="relative">
-                <span className="absolute left-3 top-3.5 text-gray-400">
-                  {field.icon}
-                </span>
-                <input
-                  type={field.type}
-                  value={field.value}
-                  onFocus={() => setFocused(field.id)}
-                  onBlur={() => setFocused(null)}
-                  onChange={(e) => field.setValue(e.target.value)}
-                  className="peer w-full border border-gray-300 rounded-xl py-3 pl-10 pr-4 text-sm bg-transparent focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-green-500 transition"
-                />
-                <label
-                  className={`absolute left-10 text-gray-500 text-sm transition-all
-                  ${
-                    focused === field.id || field.value
-                      ? "-top-2 text-xs bg-white px-1 text-green-600"
-                      : "top-3"
-                  }`}
-                >
-                  {field.label}
-                </label>
-              </div>
-            </div>
-          ))}
+          <div className="relative">
+            <span className="absolute left-3 top-3.5 text-gray-400">
+              <CiMail />
+            </span>
+            <input
+              type="email"
+              value={email}
+              onFocus={() => setFocused("email")}
+              onBlur={() => setFocused(null)}
+              onChange={(e) => setEmail(e.target.value)}
+              className="peer w-full border border-gray-300 rounded-xl py-3 pl-10 pr-4 text-sm bg-transparent focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-green-500 transition"
+            />
+            <label
+              className={`absolute left-10 text-gray-500 text-sm transition-all ${focused === "email" || email ? "-top-2 text-xs bg-white px-1 text-green-600" : "top-3"}`}
+            >
+              Email address
+            </label>
+          </div>
 
           <div className="relative">
             <span className="absolute left-3 top-3.5 text-gray-400">
@@ -130,12 +107,7 @@ const LoginForm = () => {
               className="peer w-full border border-gray-300 rounded-xl py-3 pl-10 pr-10 text-sm bg-transparent focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-green-500 transition"
             />
             <label
-              className={`absolute left-10 text-gray-500 text-sm transition-all
-              ${
-                focused === "password" || password
-                  ? "-top-2 text-xs bg-white px-1 text-green-600"
-                  : "top-3"
-              }`}
+              className={`absolute left-10 text-gray-500 text-sm transition-all ${focused === "password" || password ? "-top-2 text-xs bg-white px-1 text-green-600" : "top-3"}`}
             >
               Password
             </label>
@@ -160,12 +132,7 @@ const LoginForm = () => {
           <button
             type="submit"
             disabled={!isValid || loading}
-            className={`w-full py-3 rounded-xl text-sm font-medium transition-all duration-200 flex items-center justify-center gap-2
-            ${
-              isValid
-                ? "bg-green-600 text-white hover:bg-green-700 active:scale-[0.98] shadow-sm hover:shadow-md cursor-pointer"
-                : "bg-gray-200 text-gray-500 cursor-not-allowed"
-            }`}
+            className={`w-full py-3 rounded-xl text-sm font-medium transition-all duration-200 flex items-center justify-center gap-2 ${isValid ? "bg-green-600 text-white hover:bg-green-700 active:scale-[0.98] shadow-sm cursor-pointer" : "bg-gray-200 text-gray-500 cursor-not-allowed"}`}
           >
             {loading ? (
               <div className="flex gap-2 items-center">
@@ -178,8 +145,7 @@ const LoginForm = () => {
           </button>
 
           <div className="flex items-center gap-2 text-gray-400 text-xs">
-            <span className="flex-1 h-px bg-gray-200"></span>
-            OR
+            <span className="flex-1 h-px bg-gray-200"></span>OR
             <span className="flex-1 h-px bg-gray-200"></span>
           </div>
 
@@ -188,16 +154,15 @@ const LoginForm = () => {
             className="w-full flex items-center justify-center gap-3 py-3 border border-gray-300 rounded-xl text-sm hover:bg-green-50 hover:border-green-300 transition cursor-pointer"
             onClick={() => signIn("google", { callbackUrl: "/" })}
           >
-            <FcGoogle />
-            Continue with Google
+            <FcGoogle /> Continue with Google
           </button>
         </form>
 
         <p className="text-center text-xs text-gray-500 mt-6">
           Don&apos;t have an account?{" "}
           <Link
-            href={"/register"}
-            className="text-green-600 hover:text-green-700 hover:underline underline-offset-2 cursor-pointer inline-flex items-center gap-1"
+            href="/register"
+            className="text-green-600 hover:underline cursor-pointer inline-flex items-center gap-1"
           >
             <FiLogIn /> Register
           </Link>
@@ -207,18 +172,17 @@ const LoginForm = () => {
   );
 };
 
-const LoginPage = () => {
-  return (
-    <Suspense
-      fallback={
-        <div className="min-h-screen flex items-center justify-center bg-green-50">
-          <div className="w-8 h-8 border-4 border-green-600 border-t-transparent rounded-full animate-spin" />
-        </div>
-      }
-    >
-      <LoginForm />
-    </Suspense>
-  );
-};
+// Suspense is required because useSearchParams needs it in Next.js
+const LoginPage = () => (
+  <Suspense
+    fallback={
+      <div className="min-h-screen flex items-center justify-center bg-green-50">
+        <div className="w-8 h-8 border-4 border-green-600 border-t-transparent rounded-full animate-spin" />
+      </div>
+    }
+  >
+    <LoginForm />
+  </Suspense>
+);
 
 export default LoginPage;

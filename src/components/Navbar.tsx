@@ -17,11 +17,13 @@ import {
   FiClock,
   FiMenu,
   FiX,
+  FiTruck,
 } from "react-icons/fi";
 import { LuBoxes, LuUserRound } from "react-icons/lu";
 import logo from "@/assets/nav-logo.png";
 import { useSelector } from "react-redux";
 import { RootState } from "@/redux/store";
+import { usePathname } from "next/navigation";
 
 interface IUser {
   _id?: any;
@@ -39,6 +41,7 @@ const Navbar = ({ user }: { user: IUser }) => {
   const profileRef = useRef<HTMLDivElement>(null);
   const searchRef = useRef<HTMLDivElement>(null);
   const sidebarRef = useRef<HTMLDivElement>(null);
+  const pathName = usePathname()
 
   const {cartData} = useSelector((state:RootState)=>state.cart)
 
@@ -86,7 +89,7 @@ const Navbar = ({ user }: { user: IUser }) => {
 
             <motion.div
               ref={sidebarRef}
-              initial={{ x: "100%" }} 
+              initial={{ x: "100%" }}
               animate={{ x: 0 }}
               exit={{ x: "100%" }}
               transition={{ type: "spring", damping: 25, stiffness: 200 }}
@@ -136,40 +139,56 @@ const Navbar = ({ user }: { user: IUser }) => {
                     <Link
                       href="/admin"
                       onClick={() => setIsSidebarOpen(false)}
-                      className="flex items-center gap-4 px-4 py-3 rounded-xl text-gray-700 hover:bg-green-50 hover:text-green-700 transition-all group font-medium"
+                      className={`${pathName === "/admin" ? "text-green-700 bg-green-50" : ""} flex items-center gap-4 px-4 py-3 rounded-xl text-gray-700 hover:bg-green-50 hover:text-green-700 transition-all group font-medium`}
                     >
-                      <div className="p-2 bg-gray-100 group-hover:bg-green-100 rounded-lg transition-colors">
-                        <FiGrid className="text-gray-500 group-hover:text-green-600" />
+                      <div
+                        className={`${pathName === "/admin" ? " bg-green-100" : ""} p-2 bg-gray-100 group-hover:bg-green-100 rounded-lg transition-colors`}
+                      >
+                        <FiGrid
+                          className={`${pathName === "/admin" ? "text-green-600" : ""} text-gray-500 group-hover:text-green-600`}
+                        />
                       </div>{" "}
                       Dashboard
                     </Link>
                     <Link
                       href="/admin/add-grocery"
                       onClick={() => setIsSidebarOpen(false)}
-                      className="flex items-center gap-4 px-4 py-3 rounded-xl text-gray-700 hover:bg-green-50 hover:text-green-700 transition-all group font-medium"
+                      className={`${pathName === "/admin/add-grocery" ? "text-green-700 bg-green-50" : ""} flex items-center gap-4 px-4 py-3 rounded-xl text-gray-700 hover:bg-green-50 hover:text-green-700 transition-all group font-medium`}
                     >
-                      <div className="p-2 bg-gray-100 group-hover:bg-green-100 rounded-lg transition-colors">
-                        <FiPlusCircle className="text-gray-500 group-hover:text-green-600" />
+                      <div
+                        className={`${pathName === "/admin/add-grocery" ? " bg-green-100" : ""} p-2 bg-gray-100 group-hover:bg-green-100 rounded-lg transition-colors`}
+                      >
+                        <FiPlusCircle
+                          className={`${pathName === "/admin/add-grocery" ? "text-green-600" : ""} text-gray-500 group-hover:text-green-600`}
+                        />
                       </div>{" "}
                       Add Grocery
                     </Link>
                     <Link
                       href="/admin/view-groceries"
                       onClick={() => setIsSidebarOpen(false)}
-                      className="flex items-center gap-4 px-4 py-3 rounded-xl text-gray-700 hover:bg-green-50 hover:text-green-700 transition-all group font-medium"
+                      className={`${pathName === "/admin/view-groceries" ? "text-green-700 bg-green-50" : ""} flex items-center gap-4 px-4 py-3 rounded-xl text-gray-700 hover:bg-green-50 hover:text-green-700 transition-all group font-medium`}
                     >
-                      <div className="p-2 bg-gray-100 group-hover:bg-green-100 rounded-lg transition-colors">
-                        <LuBoxes className="text-gray-500 group-hover:text-green-600" />
+                      <div
+                        className={`${pathName === "/admin/view-groceries" ? " bg-green-100" : ""}  p-2 bg-gray-100 group-hover:bg-green-100 rounded-lg transition-colors`}
+                      >
+                        <LuBoxes
+                          className={`${pathName === "/admin/view-groceries" ? "text-green-600" : ""} text-gray-500 group-hover:text-green-600`}
+                        />
                       </div>{" "}
                       View Products
                     </Link>
                     <Link
                       href="/admin/manage-orders"
                       onClick={() => setIsSidebarOpen(false)}
-                      className="flex items-center gap-4 px-4 py-3 rounded-xl text-gray-700 hover:bg-green-50 hover:text-green-700 transition-all group font-medium"
+                      className={`${pathName === "/admin/manage-orders" ? "text-green-700 bg-green-50" : ""} flex items-center gap-4 px-4 py-3 rounded-xl text-gray-700 hover:bg-green-50 hover:text-green-700 transition-all group font-medium`}
                     >
-                      <div className="p-2 bg-gray-100 group-hover:bg-green-100 rounded-lg transition-colors">
-                        <FiList className="text-gray-500 group-hover:text-green-600" />
+                      <div
+                        className={`${pathName === "/admin/manage-order" ? " bg-green-100" : ""}  p-2 bg-gray-100 group-hover:bg-green-100 rounded-lg transition-colors`}
+                      >
+                        <FiList
+                          className={`${pathName === "/admin/manage-order" ? "text-green-600" : ""} text-gray-500 group-hover:text-green-600`}
+                        />
                       </div>{" "}
                       Manage Orders
                     </Link>
@@ -185,30 +204,56 @@ const Navbar = ({ user }: { user: IUser }) => {
                     <Link
                       href="/delivery"
                       onClick={() => setIsSidebarOpen(false)}
-                      className="flex items-center gap-4 px-4 py-3 rounded-xl text-gray-700 hover:bg-yellow-50 hover:text-yellow-700 transition-all group font-medium"
+                      className={`${pathName === "/delivery" ? "text-yellow-700 bg-yellow-50" : ""} flex items-center gap-4 px-4 py-3 rounded-xl text-gray-700 hover:bg-yellow-50 hover:text-yellow-700 transition-all group font-medium`}
                     >
-                      <div className="p-2 bg-gray-100 group-hover:bg-yellow-100 rounded-lg transition-colors">
-                        <FiGrid className="text-gray-500 group-hover:text-yellow-600" />
+                      <div
+                        className={`${pathName === "/delivery" ? " bg-yellow-100" : ""} p-2 bg-gray-100 group-hover:bg-yellow-100 rounded-lg transition-colors`}
+                      >
+                        <FiGrid
+                          className={`${pathName === "/delivery" ? "text-yellow-700" : ""} text-gray-500 group-hover:text-yellow-600`}
+                        />
                       </div>{" "}
                       Dashboard
                     </Link>
                     <Link
                       href="/delivery/requests"
                       onClick={() => setIsSidebarOpen(false)}
-                      className="flex items-center gap-4 px-4 py-3 rounded-xl text-gray-700 hover:bg-yellow-50 hover:text-yellow-700 transition-all group font-medium"
+                      className={`${pathName === "/delivery/requests" ? "text-yellow-700 bg-yellow-50" : ""} flex items-center gap-4 px-4 py-3 rounded-xl text-gray-700 hover:bg-yellow-50 hover:text-yellow-700 transition-all group font-medium`}
                     >
-                      <div className="p-2 bg-gray-100 group-hover:bg-yellow-100 rounded-lg transition-colors">
-                        <FiBell className="text-gray-500 group-hover:text-yellow-600" />
+                      <div
+                        className={`${pathName === "/delivery/requests" ? " bg-yellow-100" : ""} p-2 bg-gray-100 group-hover:bg-yellow-100 rounded-lg transition-colors`}
+                      >
+                        <FiBell
+                          className={`${pathName === "/delivery/requests" ? "text-yellow-700" : ""} text-gray-500 group-hover:text-yellow-600`}
+                        />
                       </div>{" "}
                       New Requests
                     </Link>
                     <Link
-                      href="/delivery/history"
+                      href="/delivery/active-order"
                       onClick={() => setIsSidebarOpen(false)}
-                      className="flex items-center gap-4 px-4 py-3 rounded-xl text-gray-700 hover:bg-yellow-50 hover:text-yellow-700 transition-all group font-medium"
+                      className={`${pathName === "/delivery/active-order" ? "text-yellow-700 bg-yellow-50" : ""} flex items-center gap-4 px-4 py-3 rounded-xl text-gray-700 hover:bg-yellow-50 hover:text-yellow-700 transition-all group font-medium`}
                     >
-                      <div className="p-2 bg-gray-100 group-hover:bg-yellow-100 rounded-lg transition-colors">
-                        <FiClock className="text-gray-500 group-hover:text-yellow-600" />
+                      <div
+                        className={`${pathName === "/delivery/active-order" ? " bg-yellow-100" : ""} p-2 bg-gray-100 group-hover:bg-yellow-100 rounded-lg transition-colors`}
+                      >
+                        <FiTruck
+                          className={`${pathName === "/delivery/active-order" ? "text-yellow-700" : ""} text-gray-500 group-hover:text-yellow-600`}
+                        />
+                      </div>{" "}
+                      Active Order
+                    </Link>
+                    <Link
+                      href="/delivery/order-history"
+                      onClick={() => setIsSidebarOpen(false)}
+                      className={`${pathName === "/delivery/order-history" ? "text-yellow-700 bg-yellow-50" : ""} flex items-center gap-4 px-4 py-3 rounded-xl text-gray-700 hover:bg-yellow-50 hover:text-yellow-700 transition-all group font-medium`}
+                    >
+                      <div
+                        className={`${pathName === "/delivery/order-history" ? " bg-yellow-100" : ""} p-2 bg-gray-100 group-hover:bg-yellow-100 rounded-lg transition-colors`}
+                      >
+                        <FiClock
+                          className={`${pathName === "/delivery" ? "text-yellow-700" : ""} text-gray-500 group-hover:text-yellow-600`}
+                        />
                       </div>{" "}
                       History
                     </Link>
@@ -254,7 +299,7 @@ const Navbar = ({ user }: { user: IUser }) => {
 
         {/* 2. MIDDLE SIDE: SEARCH (USER) OR QUICK LINKS (ADMIN/DELIVERY) FOR DESKTOP ONLY */}
         <div className="hidden md:flex flex-[1.5] justify-center items-center gap-4">
-          {user?.role === "user" && (
+          {/* {user?.role === "user" && (
             <div className="relative w-full max-w-md group">
               <FiSearch className="absolute left-3 top-3 text-gray-400 group-focus-within:text-green-600 transition duration-300" />
               <input
@@ -263,7 +308,7 @@ const Navbar = ({ user }: { user: IUser }) => {
                 className="w-full pl-10 pr-4 py-2.5 rounded-xl text-sm bg-white/95 backdrop-blur-md border border-white/30 focus:outline-none focus:ring-2 focus:ring-white/70 focus:shadow-[0_0_10px_rgba(255,255,255,0.6)] transition-all duration-300"
               />
             </div>
-          )}
+          )} */}
 
           {/* {user?.role === "admin" && (
             <>
@@ -287,7 +332,7 @@ const Navbar = ({ user }: { user: IUser }) => {
               </Link>
             </>
           )} */}
-{/* 
+          {/* 
           {user?.role === "deliveryBoy" && (
             <>
               <Link
@@ -309,7 +354,7 @@ const Navbar = ({ user }: { user: IUser }) => {
         {/* 3. RIGHT SIDE: CART, MENU ICON & PROFILE */}
         <div className="flex-1 flex justify-end items-center gap-4 md:gap-6">
           {/* USER: MOBILE SEARCH ICON */}
-          {user?.role === "user" && (
+          {/* {user?.role === "user" && (
             <div className="md:hidden" ref={searchRef}>
               <button
                 onClick={() => setIsSearchOpen(!isSearchOpen)}
@@ -340,7 +385,7 @@ const Navbar = ({ user }: { user: IUser }) => {
                 )}
               </AnimatePresence>
             </div>
-          )}
+          )} */}
 
           {/* USER: CART ICON */}
           {user?.role === "user" && (
@@ -349,10 +394,10 @@ const Navbar = ({ user }: { user: IUser }) => {
               className="relative p-2 rounded-lg transition-all duration-300 hover:bg-white/15 hover:scale-110 active:scale-95"
             >
               <FiShoppingCart className="text-white text-xl" />
-              
-             
 
-              <span className={`${cartData.length===0? "hidden" : ""} absolute -top-1 -right-1 bg-red-500 text-white text-[10px] font-bold px-1.5 py-0.5 rounded-full`}>
+              <span
+                className={`${cartData.length === 0 ? "hidden" : ""} absolute -top-1 -right-1 bg-red-500 text-white text-[10px] font-bold px-1.5 py-0.5 rounded-full`}
+              >
                 {cartData.length}
               </span>
             </Link>

@@ -59,22 +59,22 @@ export async function GET(
 
     order.assignedDeliveryBoy = deliveryBoyId;
     await order.save();
-
     await order.populate("assignedDeliveryBoy");
 
+    // Notify the user that a delivery boy has been assigned
     const orderOwner = order.user as any;
-    const userSocketId = orderOwner?.socketId;
-    if (userSocketId) {
+    if (orderOwner?.socketId) {
       await emitEventHandlers(
         "order-assigned",
         {
           orderId: order._id.toString(),
           assignedDeliveryBoy: order.assignedDeliveryBoy,
         },
-        userSocketId,
+        orderOwner.socketId,
       );
     }
 
+    // Notify all admins that a delivery boy was assigned
     const admins = await User.find({ role: "admin" });
     for (const admin of admins) {
       if (admin.socketId) {
@@ -89,15 +89,14 @@ export async function GET(
       }
     }
 
+    // Remove this delivery boy from other broadcasted assignments
     await DeliveryAssignment.updateMany(
       {
         _id: { $ne: assignment._id },
         broadcastedTo: deliveryBoyId,
         status: "broadcasted",
       },
-      {
-        $pull: { broadcastedTo: deliveryBoyId },
-      },
+      { $pull: { broadcastedTo: deliveryBoyId } },
     );
 
     return NextResponse.json(

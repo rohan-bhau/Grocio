@@ -2,6 +2,7 @@ import { auth } from "@/auth";
 import DeliveryBoyDashboard from "@/components/dashboards/DeliveryBoyDashboard";
 import UserDashboard from "@/components/dashboards/UserDashboard";
 import EditRoleMobile from "@/components/EditRoleMobile";
+import Footer from "@/components/Footer";
 import GeoUpdater from "@/components/GeoUpdater";
 import Navbar from "@/components/Navbar";
 import connectDb from "@/lib/db";
@@ -11,35 +12,28 @@ import { redirect } from "next/navigation";
 const Home = async () => {
   await connectDb();
   const session = await auth();
-
   const user = await User.findById(session?.user?.id);
   const plainUser = JSON.parse(JSON.stringify(user));
 
-  if (!user) {
-    redirect("/login");
-  }
+  if (!user) redirect("/login");
 
   const inComplete =
     !user.mobile || !user.role || (!user.mobile && user.role === "user");
+  if (inComplete) return <EditRoleMobile />;
 
-  if (inComplete) {
-    return <EditRoleMobile />;
-  }
-
-  if (user.role === "admin") {
-    redirect("/admin");
-  }
-
-  if (user.role === "deliveryBoy") {
-    redirect("/delivery")
-  }
+  if (user.role === "admin") redirect("/admin");
+  if (user.role === "deliveryBoy") redirect("/delivery");
 
   return (
     <div>
       <Navbar user={plainUser} />
       <GeoUpdater userId={plainUser._id} />
-      
-      {user.role === "user" && <UserDashboard />}
+      {user.role === "user" && (
+        <>
+          <UserDashboard />
+          <Footer />
+        </>
+      )}
     </div>
   );
 };

@@ -1,4 +1,3 @@
-/* eslint-disable react-hooks/set-state-in-effect */
 "use client";
 
 import dynamic from "next/dynamic";
@@ -27,7 +26,6 @@ const getStatusStyle = (status: string) => {
     case "pending":
       return "bg-amber-50 text-amber-600 ring-amber-500/20";
     case "out of delivery":
-    case "out for delivery":
       return "bg-blue-50 text-blue-600 ring-blue-500/20";
     case "delivered":
       return "bg-green-50 text-[#00a850] ring-green-500/20";
@@ -56,11 +54,12 @@ const TrackOrderPage = () => {
   const [suggestions, setSuggestions] = useState<string[]>([]);
   const [loading, setLoading] = useState(false);
 
-  // id string এ convert করো
   const idStr = id?.toString();
   const userIdStr = userData?._id?.toString();
 
+  // Fetch order details on load
   useEffect(() => {
+    if (!idStr) return;
     const getOrder = async () => {
       try {
         const result = await axios.get(`/api/user/get-order/${idStr}`);
@@ -69,7 +68,6 @@ const TrackOrderPage = () => {
           latitude: result.data.address.latitude,
           longitude: result.data.address.longitude,
         });
-
         if (result.data.assignedDeliveryBoy?.location?.coordinates) {
           setDeliveryBoyLocation({
             latitude: result.data.assignedDeliveryBoy.location.coordinates[1],
@@ -77,78 +75,72 @@ const TrackOrderPage = () => {
           });
         }
       } catch (error) {
-        console.log(error);
+        console.log("get order error:", error);
       }
     };
-    if (idStr) getOrder();
+    getOrder();
   }, [userIdStr, idStr]);
 
+  // Listen for live delivery boy location updates
   useEffect(() => {
     const socket = getSocket();
-
     const handleLocationUpdate = (data: any) => {
       setDeliveryBoyLocation({
         latitude: data?.location?.coordinates?.[1] ?? data.location.latitude,
         longitude: data?.location?.coordinates?.[0] ?? data.location.longitude,
       });
     };
-
     socket.on("update-deliveryBoy-location", handleLocationUpdate);
     return () =>
       socket.off("update-deliveryBoy-location", handleLocationUpdate);
   }, []);
 
+  // Listen for order status changes in realtime
   useEffect(() => {
     const socket = getSocket();
-
     const handleStatusUpdate = (data: { orderId: string; status: string }) => {
       if (data.orderId?.toString() === idStr) {
         setOrder((prev: any) => ({ ...prev, status: data.status }));
-
         if (data.status === "delivered") {
           router.push("/user/my-orders");
         }
       }
     };
-
     socket.on("order-status-update", handleStatusUpdate);
     return () => socket.off("order-status-update", handleStatusUpdate);
   }, [idStr, router]);
 
+  // Join the chat room and listen for new messages
   useEffect(() => {
     if (!idStr) return;
-
     const socket = getSocket();
-
-    // Room join করো
     socket.emit("join-room", idStr);
 
     const handleMessage = (message: any) => {
       if (message.roomId?.toString() === idStr) {
         setMessages((prev) => {
-          // Duplicate check
-          const alreadyExists = prev.some(
+          // Prevent duplicate from optimistic update
+          const exists = prev.some(
             (m) =>
               m.text === message.text &&
               m.senderId?.toString() === message.senderId?.toString() &&
               m.time === message.time,
           );
-          if (alreadyExists) return prev;
+          if (exists) return prev;
           return [...prev, message];
         });
       }
     };
 
     socket.on("send-message", handleMessage);
-
     return () => {
       socket.off("send-message", handleMessage);
     };
   }, [idStr]);
 
+  // Load existing chat messages from DB
   useEffect(() => {
     if (!idStr) return;
-
     const getAllMessages = async () => {
       try {
         const result = await axios.post("/api/chat/messages", {
@@ -156,13 +148,13 @@ const TrackOrderPage = () => {
         });
         setMessages(result.data || []);
       } catch (error) {
-        console.log(error);
+        console.log("load messages error:", error);
       }
     };
     getAllMessages();
   }, [idStr]);
 
-  //  Auto scroll
+  // Auto scroll chat to bottom on new messages
   useEffect(() => {
     chatBoxRef.current?.scrollTo({
       top: chatBoxRef.current.scrollHeight,
@@ -170,10 +162,8 @@ const TrackOrderPage = () => {
     });
   }, [messages]);
 
-  //  Send message with optimistic update
   const sendMsg = () => {
     if (!newMessage.trim()) return;
-
     const socket = getSocket();
 
     const message = {
@@ -186,9 +176,10 @@ const TrackOrderPage = () => {
       }),
     };
 
+    // Emit to socket server which saves to DB and broadcasts to room
     socket.emit("Send-message", message);
 
-    //  Optimistic update
+    // Show message immediately for the sender
     setMessages((prev) => [...prev, message as any]);
     setNewMessage("");
   };
@@ -199,19 +190,18 @@ const TrackOrderPage = () => {
       const lastMessage = messages
         ?.filter((m) => m.senderId?.toString() !== userIdStr)
         .at(-1);
-
       if (!lastMessage?.text) {
         setLoading(false);
         return;
       }
       const result = await axios.post("/api/chat/ai-suggesstions", {
-        message: lastMessage?.text,
+        message: lastMessage.text,
         role: "user",
       });
       setSuggestions(result.data);
-      setLoading(false);
     } catch (error) {
-      console.log(error);
+      console.log("get suggestions error:", error);
+    } finally {
       setLoading(false);
     }
   };
@@ -231,6 +221,7 @@ const TrackOrderPage = () => {
 
   return (
     <div className="w-full min-h-screen bg-slate-50/50 pb-24 font-sans text-gray-900 relative">
+      {/* Fixed header */}
       <div className="fixed top-0 left-0 w-full bg-white/80 backdrop-blur-2xl border-b border-gray-100 shadow-[0_2px_20px_rgba(0,0,0,0.02)] z-[9999]">
         <div className="max-w-2xl mx-auto px-5 py-4 flex items-center gap-4">
           <button
@@ -258,7 +249,7 @@ const TrackOrderPage = () => {
       </div>
 
       <div className="max-w-2xl mx-auto pt-24 px-4 space-y-8">
-        {/* Live Map */}
+        {/* Live map */}
         <motion.div
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
@@ -273,14 +264,14 @@ const TrackOrderPage = () => {
           </div>
         </motion.div>
 
-        {/* Chat Section */}
+        {/* Chat box */}
         <motion.div
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.5, delay: 0.1 }}
           className="bg-white rounded-[2rem] shadow-[0_8px_30px_rgb(0,0,0,0.04)] border border-gray-100 flex flex-col h-[580px] overflow-hidden relative z-10"
         >
-          {/* Chat Header */}
+          {/* Chat header with AI suggest */}
           <div className="bg-gray-50/50 p-4 border-b border-gray-100">
             <div className="flex justify-between items-center mb-3">
               <span className="font-bold text-gray-800 text-sm tracking-tight flex items-center gap-2">
@@ -302,7 +293,6 @@ const TrackOrderPage = () => {
                 )}
               </motion.button>
             </div>
-
             <AnimatePresence>
               {suggestions.length > 0 && (
                 <motion.div
@@ -339,11 +329,7 @@ const TrackOrderPage = () => {
                   initial={{ opacity: 0, y: 10, scale: 0.95 }}
                   animate={{ opacity: 1, y: 0, scale: 1 }}
                   transition={{ duration: 0.2 }}
-                  className={`flex ${
-                    msg.senderId?.toString() === userIdStr
-                      ? "justify-end"
-                      : "justify-start"
-                  }`}
+                  className={`flex ${msg.senderId?.toString() === userIdStr ? "justify-end" : "justify-start"}`}
                 >
                   <div
                     className={`px-4 py-2.5 max-w-[75%] text-sm shadow-sm ${
@@ -354,11 +340,7 @@ const TrackOrderPage = () => {
                   >
                     <p className="leading-relaxed">{msg.text}</p>
                     <p
-                      className={`text-[9px] font-medium mt-1 text-right ${
-                        msg.senderId?.toString() === userIdStr
-                          ? "text-green-100"
-                          : "text-gray-400"
-                      }`}
+                      className={`text-[9px] font-medium mt-1 text-right ${msg.senderId?.toString() === userIdStr ? "text-green-100" : "text-gray-400"}`}
                     >
                       {msg.time}
                     </p>
@@ -368,7 +350,7 @@ const TrackOrderPage = () => {
             </AnimatePresence>
           </div>
 
-          {/* Input */}
+          {/* Input area */}
           <div className="p-4 bg-white border-t border-gray-100">
             <div className="flex items-center gap-3">
               <input
@@ -380,7 +362,7 @@ const TrackOrderPage = () => {
                 className="flex-1 bg-gray-50 border border-gray-200 px-4 py-3 rounded-xl outline-none focus:bg-white focus:border-[#00a850] focus:ring-4 focus:ring-green-50 transition-all text-sm font-medium placeholder-gray-400"
               />
               <button
-                className="bg-[#00a850] hover:bg-green-600 p-3.5 rounded-xl text-white shadow-[0_4px_14px_rgba(0,168,80,0.3)] hover:shadow-[0_6px_20px_rgba(0,168,80,0.4)] transition-all active:scale-95 flex items-center justify-center cursor-pointer outline-none disabled:opacity-50 disabled:cursor-not-allowed"
+                className="bg-[#00a850] hover:bg-green-600 p-3.5 rounded-xl text-white shadow-[0_4px_14px_rgba(0,168,80,0.3)] transition-all active:scale-95 flex items-center justify-center cursor-pointer outline-none disabled:opacity-50 disabled:cursor-not-allowed"
                 onClick={sendMsg}
                 disabled={!newMessage.trim()}
               >
