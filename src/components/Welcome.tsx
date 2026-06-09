@@ -4,6 +4,7 @@ import Image from "next/image";
 import { FaArrowRight } from "react-icons/fa";
 import { LuBike } from "react-icons/lu";
 import { TiShoppingCart } from "react-icons/ti";
+import welcomeLogo from '@/assets/welcome-logo.png'
 
 type propType={
   nextStep:(s:number)=>void
@@ -27,7 +28,7 @@ const Welcome = ({nextStep}:propType) => {
           }}
         >
           <Image
-            src={"/assets/welcome-logo.png"}
+            src={welcomeLogo}
             width={250}
             height={40}
             alt="brand logo"
@@ -80,18 +81,18 @@ const Welcome = ({nextStep}:propType) => {
         <motion.button
           initial={{
             opacity: 0,
-            y:20
+            y: 20,
           }}
           animate={{
             opacity: 1,
-           y:0
+            y: 0,
           }}
           transition={{
             duration: 0.6,
             delay: 0.8,
           }}
           className="inline-flex items-center gap-3 bg-green-600 hover:bg-green-700 text-white font-semibold py-3 px-8 rounded-2xl shadow-md transition-all duration-200 cursor-pointer active:translate-y-0.5 mt-10"
-          onClick={()=>nextStep(2)}
+          onClick={() => nextStep(2)}
         >
           Next <FaArrowRight />
         </motion.button>
