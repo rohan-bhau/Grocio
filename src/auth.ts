@@ -77,7 +77,7 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
       return true;
     },
 
-    jwt({ token, user,trigger, session }) {
+    jwt({ token, user, trigger, session }) {
       if (user) {
         ((token.id = user.id),
           (token.name = user.name),
@@ -86,7 +86,7 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
       }
 
       if (trigger == "update") {
-        token.role=session.role
+        token.role = session.role;
       }
 
       return token;
@@ -99,7 +99,6 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
           (session.user.role = token.role as string));
       }
 
-
       return session;
     },
   },
@@ -109,7 +108,7 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
   },
   session: {
     strategy: "jwt",
-    maxAge: 15 * 24 * 60 * 60 * 1000,
+    maxAge: 15 * 24 * 60 * 60,
   },
   secret: process.env.AUTH_SECRET,
 });
