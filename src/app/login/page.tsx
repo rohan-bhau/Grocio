@@ -37,6 +37,7 @@ const LoginForm = () => {
 
       });
       console.log(result)
+      console.log(email,password)
       if (result?.error) {
         setError("Invalid email or password. Please try again.");
         setLoading(false);
