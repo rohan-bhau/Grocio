@@ -465,10 +465,10 @@ const Navbar = ({ user }: { user: IUser }) => {
                     </div>
                     <div className="flex flex-col">
                       <span className="text-sm font-semibold text-gray-800 truncate w-32">
-                        {user?.name || "Guest User"}
+                        {user?.name}
                       </span>
                       <span className="text-xs font-medium text-green-600 capitalize">
-                        {user?.role || "User"}
+                        {user?.role}
                       </span>
                     </div>
                   </div>
