@@ -46,6 +46,7 @@ const LoginForm = () => {
       if (result?.ok) {
         const callbackUrl = searchParams.get("callbackUrl") || "/";
         router.push(callbackUrl);
+      window.location.href=callbackUrl
         router.refresh();
       }
     } catch (err) {
