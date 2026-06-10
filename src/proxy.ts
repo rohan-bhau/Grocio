@@ -8,6 +8,7 @@ export async function proxy(req: NextRequest) {
     "/login",
     "/register",
     "/api/auth",
+    "/"
   ];
   if (publicRoutes.some((path) => pathname.startsWith(path))) {
     return NextResponse.next();
