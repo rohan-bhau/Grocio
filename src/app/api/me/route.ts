@@ -10,7 +10,7 @@ export async function GET(req: NextRequest) {
 
     const session = await auth();
     if (!session || !session.user) {
-      console.log(session, session.user)
+      console.log(session)
       return NextResponse.json(
         { message: "user is not authenticated" },
         { status: 400 },
