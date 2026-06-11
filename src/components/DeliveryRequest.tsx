@@ -1,11 +1,10 @@
-/* eslint-disable react-hooks/set-state-in-effect */
 "use client";
 
 import { getSocket } from "@/lib/socket";
 import axios from "axios";
 import { useEffect, useState } from "react";
-import { useSession } from "next-auth/react"; 
-import { FaArrowLeft, FaTruck } from "react-icons/fa";
+import { useSession } from "next-auth/react";
+import { FaTruck } from "react-icons/fa";
 import { motion, AnimatePresence } from "framer-motion";
 import { FiClock, FiMapPin, FiPhone, FiUser } from "react-icons/fi";
 import { BiCreditCard, BiPackage } from "react-icons/bi";
@@ -15,33 +14,43 @@ import { RootState } from "@/redux/store";
 
 const DeliveryRequest = () => {
   const { data: session } = useSession();
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const [assignments, setAssignments] = useState<any[]>([]);
-  const router = useRouter()
+  const router = useRouter();
+  const { userData } = useSelector((state: RootState) => state.user);
 
-  const {userData} = useSelector((state:RootState)=>state.user)
+  const fetchAssignments = async () => {
+    try {
+      const result = await axios.get("/api/delivery/get-assignments");
+      // Filter out any assignments where order is null or not populated
+      const valid = result.data.filter((a: any) => a.order && a.order._id);
+      setAssignments(valid);
+    } catch (error) {
+      console.log(error);
+    }
+  };
 
-      const fetchAssignments = async () => {
-        try {
-          const result = await axios.get("/api/delivery/get-assignments");
-          setAssignments(result.data);
-        } catch (error) {
-          console.log(error);
-        }
-      };
+  const fetchCurrentOrder = async () => {
+    try {
+      const result = await axios.get("/api/delivery/current-order");
+      if (result.data.active) {
+        router.push("/delivery/active-order");
+      }
+    } catch (error) {
+      console.log(error);
+    }
+  };
 
-
+  // Emit identity so socketId is saved in DB
   useEffect(() => {
     if (!session?.user?.id) return;
-
     const socket = getSocket();
 
     const handleConnect = () => {
-      socket.emit("identity", session?.user?.id);
+      socket.emit("identity", session.user!.id);
     };
 
     if (socket.connected) {
-      socket.emit("identity", session?.user?.id);
+      socket.emit("identity", session.user.id);
     } else {
       socket.on("connect", handleConnect);
     }
@@ -51,11 +60,15 @@ const DeliveryRequest = () => {
     };
   }, [session?.user?.id]);
 
+  // Listen for new assignment broadcasts
   useEffect(() => {
     const socket = getSocket();
 
     const handleNewAssignment = (deliveryAssignment: any) => {
-      setAssignments((prev) => [deliveryAssignment, ...prev]);
+      // Only add if order is properly populated
+      if (deliveryAssignment?.order?._id) {
+        setAssignments((prev) => [deliveryAssignment, ...prev]);
+      }
     };
 
     socket.on("new-assignment", handleNewAssignment);
@@ -65,73 +78,35 @@ const DeliveryRequest = () => {
     };
   }, []);
 
+  // Load on mount
+  useEffect(() => {
+    fetchCurrentOrder();
+    fetchAssignments();
+  }, [userData]);
+
   const formatTime = (dateString: string) => {
     return new Date(dateString).toLocaleTimeString("en-US", {
       hour: "2-digit",
       minute: "2-digit",
-
     });
   };
 
-
-
-  const fetchCurrentOrder =async () => {
+  const handleAccept = async (id: string) => {
     try {
-      const result = await axios.get("/api/delivery/current-order")
-      console.log(result)
+      await axios.get(`/api/delivery/assignment/${id}/accept-assignment`);
+      router.push("/delivery/active-order");
     } catch (error) {
-      console.log(error)
+      console.log(error);
     }
-  }
+  };
 
-    const handleAccept = async (id: string) => {
-      try {
-        const result = await axios.get(
-          `/api/delivery/assignment/${id}/accept-assignment`,
-        );
-        fetchCurrentOrder()
-        router.push("/delivery/active-order")
-      } catch (error) {
-        console.log(error);
-      }
-    };
-
-  useEffect(() => {
-      fetchCurrentOrder()
-      fetchAssignments();
-  }, [userData]);
-  
-  useEffect(() => {
-    const socket = getSocket()
-    socket.on("update-deliveryBoy-location", ({ userId, loctation }) => {
-      
-    });
-  },[])
+  const handleDecline = (id: string) => {
+    setAssignments((prev) => prev.filter((a) => a._id !== id));
+  };
 
   return (
     <div className="w-full min-h-screen bg-gray-50/50 p-4 md:p-6 pb-24 text-gray-900">
       <div className="max-w-3xl mx-auto">
-        {/* Header Section With Back Button */}
-        {/* <div className="flex items-center justify-between mb-8 sticky top-0 bg-gray-50/80 backdrop-blur-md py-4 z-10">
-          <div className="flex items-center gap-4">
-            <button
-              onClick={() => router.push("/")}
-              className="p-2.5 bg-gray-200 cursor-pointer rounded-full hover:bg-gray-300 transition-colors active:scale-95"
-            >
-              <FaArrowLeft className="text-gray-700" size={16} />
-            </button>
-            <h2 className="text-2xl md:text-3xl font-extrabold tracking-tight">
-              New Requests
-            </h2>
-          </div>
-          {assignments.length > 0 && (
-            <span className="bg-green-100 text-[#00a850] font-bold px-4 py-1.5 rounded-full text-sm shadow-sm ring-1 ring-green-500/20">
-              {assignments.length} Pending
-            </span>
-          )}
-        </div> */}
-
-        {/* Empty State */}
         {assignments.length === 0 ? (
           <motion.div
             initial={{ opacity: 0, y: 20 }}
@@ -148,11 +123,14 @@ const DeliveryRequest = () => {
             </p>
           </motion.div>
         ) : (
-          /* Assignment List */
           <div className="space-y-6">
             <AnimatePresence>
               {assignments.map((a, idx) => {
                 const order = a.order;
+
+                // Safety check - skip if order not properly populated
+                if (!order || !order._id) return null;
+
                 return (
                   <motion.div
                     key={a._id || idx}
@@ -166,14 +144,14 @@ const DeliveryRequest = () => {
                     transition={{ duration: 0.4 }}
                     className="bg-white/90 backdrop-blur-xl rounded-[1.5rem] p-5 md:p-6 shadow-[0_4px_24px_rgba(0,0,0,0.04)] border border-gray-100"
                   >
-                    {/* Top Row: Order ID & Time */}
+                    {/* Order ID and Time */}
                     <div className="flex justify-between items-start mb-4 border-b border-gray-100/80 pb-4">
                       <div>
                         <span className="text-xs font-bold text-gray-400 uppercase tracking-widest">
                           Order ID
                         </span>
                         <h3 className="text-lg font-extrabold mt-0.5">
-                          #{order._id.slice(-8).toUpperCase()}
+                          #{order._id.toString().slice(-8).toUpperCase()}
                         </h3>
                       </div>
                       <div className="flex items-center gap-1.5 text-sm font-semibold text-amber-600 bg-amber-50 px-3 py-1 rounded-lg">
@@ -182,7 +160,7 @@ const DeliveryRequest = () => {
                       </div>
                     </div>
 
-                    {/* Middle Row: Customer & Address */}
+                    {/* Customer and Address */}
                     <div className="space-y-3 mb-5">
                       <div className="flex items-center justify-between">
                         <div className="flex items-center gap-3 text-sm">
@@ -190,11 +168,11 @@ const DeliveryRequest = () => {
                             <FiUser className="text-gray-500" />
                           </div>
                           <span className="font-bold text-gray-800">
-                            {order.address.fullName}
+                            {order.address?.fullName || "Customer"}
                           </span>
                         </div>
                         <a
-                          href={`tel:${order.address.mobile}`}
+                          href={`tel:${order.address?.mobile}`}
                           className="flex items-center gap-2 text-sm font-bold text-[#00a850] bg-green-50 px-3 py-1.5 rounded-lg active:scale-95 transition-transform"
                         >
                           <FiPhone /> Call
@@ -204,27 +182,29 @@ const DeliveryRequest = () => {
                       <div className="flex items-start gap-3 bg-gray-50/50 p-3.5 rounded-xl border border-gray-100">
                         <FiMapPin className="text-red-500 mt-0.5 shrink-0 text-lg" />
                         <span className="text-sm font-medium text-gray-700 leading-relaxed">
-                          {order.address.fullAddress}
+                          {order.address?.fullAddress ||
+                            "Address not available"}
                         </span>
                       </div>
                     </div>
 
-                    {/* Order Details & Summary */}
+                    {/* Order Summary */}
                     <div className="flex items-center justify-between bg-gray-50/50 p-4 rounded-xl border border-gray-100 mb-6">
                       <div className="space-y-1">
                         <div className="flex items-center gap-2 text-xs font-bold text-gray-500 uppercase">
                           {order.paymentMethod === "cod" ? (
-                            <FaTruck className="text-lg" />
+                            <>
+                              <FaTruck className="text-lg" /> Cash to Collect
+                            </>
                           ) : (
-                            <BiCreditCard className="text-lg" />
+                            <>
+                              <BiCreditCard className="text-lg" /> Paid Online
+                            </>
                           )}
-                          {order.paymentMethod === "cod"
-                            ? "Cash to Collect"
-                            : "Paid Online"}
                         </div>
                         <div className="flex items-center gap-2 text-sm font-semibold text-gray-700">
                           <BiPackage className="text-gray-400" />
-                          {order.items.length} Item(s)
+                          {order.items?.length || 0} Item(s)
                         </div>
                       </div>
                       <div className="text-right">
@@ -239,12 +219,14 @@ const DeliveryRequest = () => {
 
                     {/* Action Buttons */}
                     <div className="flex gap-3">
-                      <button className="flex-1 bg-white cursor-pointer border-2 border-gray-200 text-gray-600 font-bold py-3.5 rounded-xl hover:bg-gray-50 active:scale-[0.98] transition-all uppercase tracking-wide text-sm">
+                      <button
+                        onClick={() => handleDecline(a._id)}
+                        className="flex-1 bg-white cursor-pointer border-2 border-gray-200 text-gray-600 font-bold py-3.5 rounded-xl hover:bg-gray-50 active:scale-[0.98] transition-all uppercase tracking-wide text-sm"
+                      >
                         Decline
                       </button>
                       <button
-                        onClick={() =>
-                          handleAccept(a._id)}
+                        onClick={() => handleAccept(a._id)}
                         className="flex-[2] bg-[#00a850] cursor-pointer text-white font-bold py-3.5 rounded-xl shadow-[0_4px_14px_rgba(0,168,80,0.3)] active:scale-[0.98] transition-all uppercase tracking-wide text-sm"
                       >
                         Accept Order

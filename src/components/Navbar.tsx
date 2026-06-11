@@ -7,7 +7,6 @@ import { signOut } from "next-auth/react";
 import { motion, AnimatePresence } from "framer-motion";
 import {
   FiShoppingCart,
-  FiSearch,
   FiLogOut,
   FiBox,
   FiGrid,
@@ -18,6 +17,8 @@ import {
   FiMenu,
   FiX,
   FiTruck,
+  FiLogIn,
+  FiUserPlus,
 } from "react-icons/fi";
 import { LuBoxes, LuUserRound } from "react-icons/lu";
 import logo from "@/assets/nav-logo.png";
@@ -33,17 +34,15 @@ interface IUser {
   image?: string;
 }
 
-const Navbar = ({ user }: { user: IUser }) => {
+const Navbar = ({ user }: { user?: IUser | null }) => {
   const [isProfileOpen, setIsProfileOpen] = useState(false);
-  const [isSearchOpen, setIsSearchOpen] = useState(false);
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
 
   const profileRef = useRef<HTMLDivElement>(null);
-  const searchRef = useRef<HTMLDivElement>(null);
   const sidebarRef = useRef<HTMLDivElement>(null);
-  const pathName = usePathname()
+  const pathName = usePathname();
 
-  const {cartData} = useSelector((state:RootState)=>state.cart)
+  const { cartData } = useSelector((state: RootState) => state.cart);
 
   useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {
@@ -52,12 +51,6 @@ const Navbar = ({ user }: { user: IUser }) => {
         !profileRef.current.contains(event.target as Node)
       ) {
         setIsProfileOpen(false);
-      }
-      if (
-        searchRef.current &&
-        !searchRef.current.contains(event.target as Node)
-      ) {
-        setIsSearchOpen(false);
       }
     };
     document.addEventListener("mousedown", handleClickOutside);
@@ -74,9 +67,9 @@ const Navbar = ({ user }: { user: IUser }) => {
 
   return (
     <>
-      {/* ======================= MOBILE SIDEBAR (ADMIN & DELIVERY ONLY) ======================= */}
+      {/* Mobile Sidebar for admin and delivery only */}
       <AnimatePresence>
-        {isSidebarOpen && user?.role !== "user" && (
+        {isSidebarOpen && user && user.role !== "user" && (
           <>
             <motion.div
               initial={{ opacity: 0 }}
@@ -95,7 +88,6 @@ const Navbar = ({ user }: { user: IUser }) => {
               transition={{ type: "spring", damping: 25, stiffness: 200 }}
               className="fixed top-0 right-0 h-full w-72 bg-white shadow-2xl z-[70] flex flex-col"
             >
-              {/* Sidebar Header */}
               <div className="bg-gradient-to-r from-green-600 to-green-800 p-6 flex items-center justify-between">
                 <div className="flex items-center gap-3">
                   <div className="w-12 h-12 rounded-full overflow-hidden bg-white/20 border-2 border-white/50 flex items-center justify-center">
@@ -128,143 +120,103 @@ const Navbar = ({ user }: { user: IUser }) => {
                 </button>
               </div>
 
-              {/* Sidebar Links */}
               <div className="flex-1 overflow-y-auto py-6 px-4 flex flex-col gap-2">
-                {/* Admin Links */}
                 {user?.role === "admin" && (
                   <>
                     <h3 className="text-xs font-bold text-gray-400 uppercase tracking-wider mb-2 ml-2">
                       Main Menu
                     </h3>
-                    <Link
-                      href="/admin"
-                      onClick={() => setIsSidebarOpen(false)}
-                      className={`${pathName === "/admin" ? "text-green-700 bg-green-50" : ""} flex items-center gap-4 px-4 py-3 rounded-xl text-gray-700 hover:bg-green-50 hover:text-green-700 transition-all group font-medium`}
-                    >
-                      <div
-                        className={`${pathName === "/admin" ? " bg-green-100" : ""} p-2 bg-gray-100 group-hover:bg-green-100 rounded-lg transition-colors`}
+                    {[
+                      { href: "/admin", label: "Dashboard", icon: <FiGrid /> },
+                      {
+                        href: "/admin/add-grocery",
+                        label: "Add Grocery",
+                        icon: <FiPlusCircle />,
+                      },
+                      {
+                        href: "/admin/view-groceries",
+                        label: "View Products",
+                        icon: <LuBoxes />,
+                      },
+                      {
+                        href: "/admin/manage-orders",
+                        label: "Manage Orders",
+                        icon: <FiList />,
+                      },
+                    ].map((item) => (
+                      <Link
+                        key={item.href}
+                        href={item.href}
+                        onClick={() => setIsSidebarOpen(false)}
+                        className={`flex items-center gap-4 px-4 py-3 rounded-xl text-gray-700 hover:bg-green-50 hover:text-green-700 transition-all group font-medium ${pathName === item.href ? "bg-green-50 text-green-700" : ""}`}
                       >
-                        <FiGrid
-                          className={`${pathName === "/admin" ? "text-green-600" : ""} text-gray-500 group-hover:text-green-600`}
-                        />
-                      </div>{" "}
-                      Dashboard
-                    </Link>
-                    <Link
-                      href="/admin/add-grocery"
-                      onClick={() => setIsSidebarOpen(false)}
-                      className={`${pathName === "/admin/add-grocery" ? "text-green-700 bg-green-50" : ""} flex items-center gap-4 px-4 py-3 rounded-xl text-gray-700 hover:bg-green-50 hover:text-green-700 transition-all group font-medium`}
-                    >
-                      <div
-                        className={`${pathName === "/admin/add-grocery" ? " bg-green-100" : ""} p-2 bg-gray-100 group-hover:bg-green-100 rounded-lg transition-colors`}
-                      >
-                        <FiPlusCircle
-                          className={`${pathName === "/admin/add-grocery" ? "text-green-600" : ""} text-gray-500 group-hover:text-green-600`}
-                        />
-                      </div>{" "}
-                      Add Grocery
-                    </Link>
-                    <Link
-                      href="/admin/view-groceries"
-                      onClick={() => setIsSidebarOpen(false)}
-                      className={`${pathName === "/admin/view-groceries" ? "text-green-700 bg-green-50" : ""} flex items-center gap-4 px-4 py-3 rounded-xl text-gray-700 hover:bg-green-50 hover:text-green-700 transition-all group font-medium`}
-                    >
-                      <div
-                        className={`${pathName === "/admin/view-groceries" ? " bg-green-100" : ""}  p-2 bg-gray-100 group-hover:bg-green-100 rounded-lg transition-colors`}
-                      >
-                        <LuBoxes
-                          className={`${pathName === "/admin/view-groceries" ? "text-green-600" : ""} text-gray-500 group-hover:text-green-600`}
-                        />
-                      </div>{" "}
-                      View Products
-                    </Link>
-                    <Link
-                      href="/admin/manage-orders"
-                      onClick={() => setIsSidebarOpen(false)}
-                      className={`${pathName === "/admin/manage-orders" ? "text-green-700 bg-green-50" : ""} flex items-center gap-4 px-4 py-3 rounded-xl text-gray-700 hover:bg-green-50 hover:text-green-700 transition-all group font-medium`}
-                    >
-                      <div
-                        className={`${pathName === "/admin/manage-order" ? " bg-green-100" : ""}  p-2 bg-gray-100 group-hover:bg-green-100 rounded-lg transition-colors`}
-                      >
-                        <FiList
-                          className={`${pathName === "/admin/manage-order" ? "text-green-600" : ""} text-gray-500 group-hover:text-green-600`}
-                        />
-                      </div>{" "}
-                      Manage Orders
-                    </Link>
+                        <div
+                          className={`p-2 rounded-lg transition-colors ${pathName === item.href ? "bg-green-100" : "bg-gray-100 group-hover:bg-green-100"}`}
+                        >
+                          <span
+                            className={`${pathName === item.href ? "text-green-600" : "text-gray-500 group-hover:text-green-600"}`}
+                          >
+                            {item.icon}
+                          </span>
+                        </div>
+                        {item.label}
+                      </Link>
+                    ))}
                   </>
                 )}
 
-                {/* Delivery Boy Links */}
                 {user?.role === "deliveryBoy" && (
                   <>
                     <h3 className="text-xs font-bold text-gray-400 uppercase tracking-wider mb-2 ml-2">
                       Deliveries
                     </h3>
-                    <Link
-                      href="/delivery"
-                      onClick={() => setIsSidebarOpen(false)}
-                      className={`${pathName === "/delivery" ? "text-yellow-700 bg-yellow-50" : ""} flex items-center gap-4 px-4 py-3 rounded-xl text-gray-700 hover:bg-yellow-50 hover:text-yellow-700 transition-all group font-medium`}
-                    >
-                      <div
-                        className={`${pathName === "/delivery" ? " bg-yellow-100" : ""} p-2 bg-gray-100 group-hover:bg-yellow-100 rounded-lg transition-colors`}
+                    {[
+                      {
+                        href: "/delivery",
+                        label: "Dashboard",
+                        icon: <FiGrid />,
+                      },
+                      {
+                        href: "/delivery/requests",
+                        label: "New Requests",
+                        icon: <FiBell />,
+                      },
+                      {
+                        href: "/delivery/active-order",
+                        label: "Active Order",
+                        icon: <FiTruck />,
+                      },
+                      {
+                        href: "/delivery/order-history",
+                        label: "History",
+                        icon: <FiClock />,
+                      },
+                    ].map((item) => (
+                      <Link
+                        key={item.href}
+                        href={item.href}
+                        onClick={() => setIsSidebarOpen(false)}
+                        className={`flex items-center gap-4 px-4 py-3 rounded-xl text-gray-700 hover:bg-yellow-50 hover:text-yellow-700 transition-all group font-medium ${pathName === item.href ? "bg-yellow-50 text-yellow-700" : ""}`}
                       >
-                        <FiGrid
-                          className={`${pathName === "/delivery" ? "text-yellow-700" : ""} text-gray-500 group-hover:text-yellow-600`}
-                        />
-                      </div>{" "}
-                      Dashboard
-                    </Link>
-                    <Link
-                      href="/delivery/requests"
-                      onClick={() => setIsSidebarOpen(false)}
-                      className={`${pathName === "/delivery/requests" ? "text-yellow-700 bg-yellow-50" : ""} flex items-center gap-4 px-4 py-3 rounded-xl text-gray-700 hover:bg-yellow-50 hover:text-yellow-700 transition-all group font-medium`}
-                    >
-                      <div
-                        className={`${pathName === "/delivery/requests" ? " bg-yellow-100" : ""} p-2 bg-gray-100 group-hover:bg-yellow-100 rounded-lg transition-colors`}
-                      >
-                        <FiBell
-                          className={`${pathName === "/delivery/requests" ? "text-yellow-700" : ""} text-gray-500 group-hover:text-yellow-600`}
-                        />
-                      </div>{" "}
-                      New Requests
-                    </Link>
-                    <Link
-                      href="/delivery/active-order"
-                      onClick={() => setIsSidebarOpen(false)}
-                      className={`${pathName === "/delivery/active-order" ? "text-yellow-700 bg-yellow-50" : ""} flex items-center gap-4 px-4 py-3 rounded-xl text-gray-700 hover:bg-yellow-50 hover:text-yellow-700 transition-all group font-medium`}
-                    >
-                      <div
-                        className={`${pathName === "/delivery/active-order" ? " bg-yellow-100" : ""} p-2 bg-gray-100 group-hover:bg-yellow-100 rounded-lg transition-colors`}
-                      >
-                        <FiTruck
-                          className={`${pathName === "/delivery/active-order" ? "text-yellow-700" : ""} text-gray-500 group-hover:text-yellow-600`}
-                        />
-                      </div>{" "}
-                      Active Order
-                    </Link>
-                    <Link
-                      href="/delivery/order-history"
-                      onClick={() => setIsSidebarOpen(false)}
-                      className={`${pathName === "/delivery/order-history" ? "text-yellow-700 bg-yellow-50" : ""} flex items-center gap-4 px-4 py-3 rounded-xl text-gray-700 hover:bg-yellow-50 hover:text-yellow-700 transition-all group font-medium`}
-                    >
-                      <div
-                        className={`${pathName === "/delivery/order-history" ? " bg-yellow-100" : ""} p-2 bg-gray-100 group-hover:bg-yellow-100 rounded-lg transition-colors`}
-                      >
-                        <FiClock
-                          className={`${pathName === "/delivery" ? "text-yellow-700" : ""} text-gray-500 group-hover:text-yellow-600`}
-                        />
-                      </div>{" "}
-                      History
-                    </Link>
+                        <div
+                          className={`p-2 rounded-lg transition-colors ${pathName === item.href ? "bg-yellow-100" : "bg-gray-100 group-hover:bg-yellow-100"}`}
+                        >
+                          <span
+                            className={`${pathName === item.href ? "text-yellow-700" : "text-gray-500 group-hover:text-yellow-600"}`}
+                          >
+                            {item.icon}
+                          </span>
+                        </div>
+                        {item.label}
+                      </Link>
+                    ))}
                   </>
                 )}
               </div>
 
-              {/* === LOGOUT BUTTON IN SIDEBAR BOTTOM === */}
               <div className="p-4 border-t border-gray-100">
                 <button
-                  onClick={() => signOut()}
+                  onClick={() => signOut({ callbackUrl: "/" })}
                   className="flex items-center justify-center gap-2 w-full py-3 bg-red-50 text-red-600 font-medium rounded-xl hover:bg-red-100 transition-colors"
                 >
                   <FiLogOut className="text-lg" />
@@ -276,12 +228,12 @@ const Navbar = ({ user }: { user: IUser }) => {
         )}
       </AnimatePresence>
 
-      {/* ======================= MAIN TOP NAVBAR ======================= */}
+      {/* Main Top Navbar */}
       <div
         suppressHydrationWarning
         className="w-[95%] fixed top-4 left-1/2 -translate-x-1/2 bg-gradient-to-r from-green-600 to-green-800 rounded-2xl shadow-[0_10px_30px_rgba(0,0,0,0.25)] hover:shadow-[0_12px_40px_rgba(0,0,0,0.3)] transition-all duration-300 flex items-center justify-between h-20 px-4 md:px-8 z-50"
       >
-        {/* 1. LEFT SIDE: LOGO */}
+        {/* Logo */}
         <div className="flex-1 flex justify-start">
           <Link href="/" className="flex items-center group">
             <div className="bg-white px-3 py-1.5 rounded-lg shadow-sm transition-all duration-300 group-hover:scale-[1.05] group-hover:shadow-md">
@@ -297,114 +249,31 @@ const Navbar = ({ user }: { user: IUser }) => {
           </Link>
         </div>
 
-        {/* 2. MIDDLE SIDE: SEARCH (USER) OR QUICK LINKS (ADMIN/DELIVERY) FOR DESKTOP ONLY */}
-        <div className="hidden md:flex flex-[1.5] justify-center items-center gap-4">
-          {/* {user?.role === "user" && (
-            <div className="relative w-full max-w-md group">
-              <FiSearch className="absolute left-3 top-3 text-gray-400 group-focus-within:text-green-600 transition duration-300" />
-              <input
-                type="text"
-                placeholder="Search groceries..."
-                className="w-full pl-10 pr-4 py-2.5 rounded-xl text-sm bg-white/95 backdrop-blur-md border border-white/30 focus:outline-none focus:ring-2 focus:ring-white/70 focus:shadow-[0_0_10px_rgba(255,255,255,0.6)] transition-all duration-300"
-              />
-            </div>
-          )} */}
+        {/* Middle - empty for now */}
+        <div className="hidden md:flex flex-[1.5] justify-center items-center gap-4" />
 
-          {/* {user?.role === "admin" && (
-            <>
-              <Link
-                href="/admin/add-grocery"
-                className="flex items-center gap-2 text-white/90 hover:text-white bg-white/10 hover:bg-white/20 px-4 py-2 rounded-xl transition-all duration-300 font-medium text-sm border border-white/10"
-              >
-                <FiPlusCircle className="text-lg" /> Add Grocery
-              </Link>
-              <Link
-                href="/admin/view-groceries"
-                className="flex items-center gap-2 text-white/90 hover:text-white bg-white/10 hover:bg-white/20 px-4 py-2 rounded-xl transition-all duration-300 font-medium text-sm border border-white/10"
-              >
-                <LuBoxes className="text-lg" /> View Products
-              </Link>
-              <Link
-                href="/admin/manage-orders"
-                className="flex items-center gap-2 text-white/90 hover:text-white bg-white/10 hover:bg-white/20 px-4 py-2 rounded-xl transition-all duration-300 font-medium text-sm border border-white/10"
-              >
-                <FiList className="text-lg" /> Manage Orders
-              </Link>
-            </>
-          )} */}
-          {/* 
-          {user?.role === "deliveryBoy" && (
-            <>
-              <Link
-                href="/delivery/requests"
-                className="flex items-center gap-2 text-white/90 hover:text-white bg-white/10 hover:bg-white/20 px-4 py-2 rounded-xl transition-all duration-300 font-medium text-sm border border-white/10"
-              >
-                <FiBell className="text-lg" /> New Requests
-              </Link>
-              <Link
-                href="/delivery/history"
-                className="flex items-center gap-2 text-white/90 hover:text-white bg-white/10 hover:bg-white/20 px-4 py-2 rounded-xl transition-all duration-300 font-medium text-sm border border-white/10"
-              >
-                <FiClock className="text-lg" /> History
-              </Link>
-            </>
-          )} */}
-        </div>
-
-        {/* 3. RIGHT SIDE: CART, MENU ICON & PROFILE */}
-        <div className="flex-1 flex justify-end items-center gap-4 md:gap-6">
-          {/* USER: MOBILE SEARCH ICON */}
-          {/* {user?.role === "user" && (
-            <div className="md:hidden" ref={searchRef}>
-              <button
-                onClick={() => setIsSearchOpen(!isSearchOpen)}
-                className="p-2 rounded-lg transition-all duration-300 hover:bg-white/15 hover:scale-110 active:scale-95"
-              >
-                <FiSearch className="text-white text-xl" />
-              </button>
-              <AnimatePresence>
-                {isSearchOpen && (
-                  <motion.div
-                    initial={{ opacity: 0, y: -10 }}
-                    animate={{ opacity: 1, y: 0 }}
-                    exit={{ opacity: 0, y: -10 }}
-                    transition={{ duration: 0.2 }}
-                    className="absolute top-[85px] left-0 w-full px-2 sm:px-0"
-                  >
-                    <div className="w-full bg-white p-3 rounded-xl shadow-xl border border-gray-100">
-                      <div className="relative w-full">
-                        <FiSearch className="absolute left-3 top-3 text-gray-400" />
-                        <input
-                          type="text"
-                          placeholder="Search groceries..."
-                          className="w-full pl-10 pr-4 py-2.5 rounded-lg text-sm bg-gray-50 border border-gray-200 focus:outline-none focus:ring-2 focus:ring-green-500"
-                        />
-                      </div>
-                    </div>
-                  </motion.div>
-                )}
-              </AnimatePresence>
-            </div>
-          )} */}
-
-          {/* USER: CART ICON */}
-          {user?.role === "user" && (
+        {/* Right Side */}
+        <div className="flex-1 flex justify-end items-center gap-3 md:gap-4">
+          {/* Cart icon - Visible for logged out guests OR logged-in normal users */}
+          {(!user || user.role === "user") && (
             <Link
-              href="/user/cart"
-              className="relative p-2 rounded-lg transition-all duration-300 hover:bg-white/15 hover:scale-110 active:scale-95"
+              href={user ? "/user/cart" : "/login"}
+              className={
+                "relative p-2 rounded-lg transition-all duration-300 hover:bg-white/15 hover:scale-110 active:scale-95"
+              }
             >
               <FiShoppingCart className="text-white text-xl" />
-
               <span
-                className={`${cartData.length === 0 ? "hidden" : ""} absolute -top-1 -right-1 bg-red-500 text-white text-[10px] font-bold px-1.5 py-0.5 rounded-full`}
+                suppressHydrationWarning
+                className={`${!cartData || cartData.length === 0 ? "hidden" : ""} absolute -top-1 -right-1 bg-red-500 text-white text-[10px] font-bold px-1.5 py-0.5 rounded-full`}
               >
-                {cartData.length}
+                {cartData?.length || 0}
               </span>
             </Link>
           )}
 
-          {/* ADMIN & DELIVERY: MOBILE HAMBURGER ICON (ON RIGHT SIDE) */}
-          {user?.role !== "user" && (
+          {/* Mobile hamburger for admin and delivery */}
+          {user && user.role !== "user" && (
             <button
               onClick={() => setIsSidebarOpen(true)}
               className="md:hidden p-2 bg-white/10 hover:bg-white/20 rounded-lg text-white transition-colors"
@@ -413,102 +282,124 @@ const Navbar = ({ user }: { user: IUser }) => {
             </button>
           )}
 
-          {/* PROFILE W/ DROPDOWN (GLOBAL) */}
-          <div className="relative" ref={profileRef}>
-            <div
-              onClick={() => setIsProfileOpen(!isProfileOpen)}
-              className="flex items-center gap-2 cursor-pointer group"
-            >
-              <div className="w-8 h-8 rounded-full overflow-hidden border border-white/30 transition-all duration-300 group-hover:scale-110 group-hover:border-white bg-white/10 flex items-center justify-center shadow-inner">
-                {user?.image ? (
-                  <Image
-                    src={user.image}
-                    width={32}
-                    height={32}
-                    alt="user"
-                    className="w-full h-full object-cover"
-                  />
-                ) : (
-                  <LuUserRound className="text-white" />
-                )}
-              </div>
-              <span className="hidden md:block text-sm text-white font-medium transition-all duration-300 group-hover:underline underline-offset-4">
-                {user?.name?.split(" ")[0] || "Account"}
-              </span>
+          {/* Not logged in - show Login and Register buttons */}
+          {!user && (
+            <div className="flex items-center gap-2">
+              <Link
+                href="/login"
+                className="flex items-center gap-2 bg-white/10 hover:bg-white/20 text-white text-sm font-semibold px-4 py-2 rounded-xl transition-all border border-white/20"
+              >
+                <FiLogIn size={16} />
+                <span className="hidden sm:block">Login</span>
+              </Link>
+              <Link
+                href="/register"
+                className="flex items-center gap-2 bg-white text-green-700 hover:bg-green-50 text-sm font-semibold px-4 py-2 rounded-xl transition-all"
+              >
+                <FiUserPlus size={16} />
+                <span className="hidden sm:block">Register</span>
+              </Link>
             </div>
+          )}
 
-            <AnimatePresence>
-              {isProfileOpen && (
-                <motion.div
-                  initial={{ opacity: 0, y: 10, scale: 0.95 }}
-                  animate={{ opacity: 1, y: 0, scale: 1 }}
-                  exit={{ opacity: 0, y: 10, scale: 0.95 }}
-                  transition={{ duration: 0.2 }}
-                  onClick={() => setIsProfileOpen(false)}
-                  className="absolute right-0 mt-4 w-56 bg-white rounded-xl shadow-[0_10px_40px_rgba(0,0,0,0.1)] border border-gray-100 overflow-hidden"
-                >
-                  <div className="flex items-center gap-3 p-4 border-b border-gray-100 bg-gray-50/50">
-                    <div className="w-10 h-10 rounded-full overflow-hidden bg-gray-200 flex-shrink-0 flex items-center justify-center">
-                      {user?.image ? (
-                        <Image
-                          src={user.image}
-                          width={40}
-                          height={40}
-                          alt="user"
-                          className="w-full h-full object-cover"
-                        />
-                      ) : (
-                        <div className="w-full h-full flex items-center justify-center bg-green-100 text-green-600">
-                          <LuUserRound size={20} />
-                        </div>
+          {/* Logged in - Profile dropdown */}
+          {user && (
+            <div className="relative" ref={profileRef}>
+              <div
+                onClick={() => setIsProfileOpen(!isProfileOpen)}
+                className="flex items-center gap-2 cursor-pointer group"
+              >
+                <div className="w-8 h-8 rounded-full overflow-hidden border border-white/30 transition-all duration-300 group-hover:scale-110 group-hover:border-white bg-white/10 flex items-center justify-center shadow-inner">
+                  {user?.image ? (
+                    <Image
+                      src={user.image}
+                      width={32}
+                      height={32}
+                      alt="user"
+                      className="w-full h-full object-cover"
+                    />
+                  ) : (
+                    <LuUserRound className="text-white" />
+                  )}
+                </div>
+                <span className="hidden md:block text-sm text-white font-medium transition-all duration-300 group-hover:underline underline-offset-4">
+                  {user?.name?.split(" ")[0] || "Account"}
+                </span>
+              </div>
+
+              <AnimatePresence>
+                {isProfileOpen && (
+                  <motion.div
+                    initial={{ opacity: 0, y: 10, scale: 0.95 }}
+                    animate={{ opacity: 1, y: 0, scale: 1 }}
+                    exit={{ opacity: 0, y: 10, scale: 0.95 }}
+                    transition={{ duration: 0.2 }}
+                    onClick={() => setIsProfileOpen(false)}
+                    className="absolute right-0 mt-4 w-56 bg-white rounded-xl shadow-[0_10px_40px_rgba(0,0,0,0.1)] border border-gray-100 overflow-hidden"
+                  >
+                    <div className="flex items-center gap-3 p-4 border-b border-gray-100 bg-gray-50/50">
+                      <div className="w-10 h-10 rounded-full overflow-hidden bg-gray-200 flex-shrink-0 flex items-center justify-center">
+                        {user?.image ? (
+                          <Image
+                            src={user.image}
+                            width={40}
+                            height={40}
+                            alt="user"
+                            className="w-full h-full object-cover"
+                          />
+                        ) : (
+                          <div className="w-full h-full flex items-center justify-center bg-green-100 text-green-600">
+                            <LuUserRound size={20} />
+                          </div>
+                        )}
+                      </div>
+                      <div className="flex flex-col">
+                        <span className="text-sm font-semibold text-gray-800 truncate w-32">
+                          {user?.name}
+                        </span>
+                        <span className="text-xs font-medium text-green-600 capitalize">
+                          {user?.role}
+                        </span>
+                      </div>
+                    </div>
+
+                    <div className="p-2 flex flex-col gap-1">
+                      {user?.role === "admin" && (
+                        <Link
+                          href="/admin"
+                          className="flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium text-gray-600 hover:bg-blue-50 hover:text-blue-700 transition-all"
+                        >
+                          <FiGrid className="text-lg text-gray-400" /> Dashboard
+                        </Link>
                       )}
+                      {user?.role === "deliveryBoy" && (
+                        <Link
+                          href="/delivery"
+                          className="flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium text-gray-600 hover:bg-yellow-50 hover:text-yellow-700 transition-all"
+                        >
+                          <FiGrid className="text-lg text-gray-400" /> Dashboard
+                        </Link>
+                      )}
+                      {user?.role === "user" && (
+                        <Link
+                          href="/user/my-orders"
+                          className="flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium text-gray-600 hover:bg-green-50 hover:text-green-700 transition-all"
+                        >
+                          <FiBox className="text-lg text-gray-400" /> My Orders
+                        </Link>
+                      )}
+                      <button
+                        onClick={() => signOut({ callbackUrl: "/" })}
+                        className="flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium text-gray-600 hover:bg-red-50 hover:text-red-600 w-full text-left mt-1 border-t border-gray-50 transition-all"
+                      >
+                        <FiLogOut className="text-lg text-gray-400" /> Logout
+                      </button>
                     </div>
-                    <div className="flex flex-col">
-                      <span className="text-sm font-semibold text-gray-800 truncate w-32">
-                        {user?.name}
-                      </span>
-                      <span className="text-xs font-medium text-green-600 capitalize">
-                        {user?.role}
-                      </span>
-                    </div>
-                  </div>
-
-                  <div className="p-2 flex flex-col gap-1">
-                    {user?.role === "admin" && (
-                      <Link
-                        href="/admin"
-                        className="flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium text-gray-600 hover:bg-blue-50 hover:text-blue-700 transition-all"
-                      >
-                        <FiGrid className="text-lg text-gray-400" /> Dashboard
-                      </Link>
-                    )}
-                    {user?.role === "deliveryBoy" && (
-                      <Link
-                        href="/delivery"
-                        className="flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium text-gray-600 hover:bg-yellow-50 hover:text-yellow-700 transition-all"
-                      >
-                        <FiGrid className="text-lg text-gray-400" /> Dashboard
-                      </Link>
-                    )}
-                    {user?.role === "user" && (
-                      <Link
-                        href="/user/my-orders"
-                        className="flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium text-gray-600 hover:bg-green-50 hover:text-green-700 transition-all"
-                      >
-                        <FiBox className="text-lg text-gray-400" /> My Orders
-                      </Link>
-                    )}
-                    <button
-                      onClick={() => signOut()}
-                      className="flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium text-gray-600 hover:bg-red-50 hover:text-red-600 w-full text-left mt-1 border-t border-gray-50 transition-all"
-                    >
-                      <FiLogOut className="text-lg text-gray-400" /> Logout
-                    </button>
-                  </div>
-                </motion.div>
-              )}
-            </AnimatePresence>
-          </div>
+                  </motion.div>
+                )}
+              </AnimatePresence>
+            </div>
+          )}
         </div>
       </div>
     </>

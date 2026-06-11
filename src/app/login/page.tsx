@@ -28,26 +28,40 @@ const LoginForm = () => {
     e.preventDefault();
     setLoading(true);
     setError("");
+
     try {
-      // Using redirect false so we can handle the result manually
       const result = await signIn("credentials", {
         email,
         password,
         redirect: false,
-
       });
-      console.log(result)
-      console.log(email,password)
+
       if (result?.error) {
         setError("Invalid email or password. Please try again.");
         setLoading(false);
         return;
       }
+
       if (result?.ok) {
-        const callbackUrl = searchParams.get("callbackUrl") || "/";
-        router.push(callbackUrl);
-      window.location.href=callbackUrl
-        router.refresh();
+        // Get the session to find the user role
+        const sessionRes = await fetch("/api/auth/session");
+        const session = await sessionRes.json();
+        const role = session?.user?.role;
+
+        // Redirect based on role
+        if (role === "admin") {
+          window.location.href = "/admin";
+        } else if (role === "deliveryBoy") {
+          window.location.href = "/delivery";
+        } else {
+          // For regular users check if there is a callbackUrl
+          const callbackUrl = searchParams.get("callbackUrl");
+          if (callbackUrl && !callbackUrl.includes("/login")) {
+            window.location.href = callbackUrl;
+          } else {
+            window.location.href = "/";
+          }
+        }
       }
     } catch (err) {
       console.log("login error:", err);
@@ -176,7 +190,6 @@ const LoginForm = () => {
   );
 };
 
-// Suspense is required because useSearchParams needs it in Next.js
 const LoginPage = () => (
   <Suspense
     fallback={

@@ -122,7 +122,8 @@ const GroceryItemCard = ({ item }: { item: IGrocery }) => {
                 animate={{ opacity: 1, scale: 1 }}
                 exit={{ opacity: 0, scale: 0.95 }}
                 transition={{ duration: 0.15 }}
-                onClick={() =>
+                  onClick={() =>
+                  
                   // eslint-disable-next-line @typescript-eslint/no-explicit-any
                   dispatch(addToCart({ ...item, quantity: 1 } as any))
                 }

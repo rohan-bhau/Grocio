@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import { Toaster } from "react-hot-toast";
 import "./globals.css";
 import Provider from "@/Provider";
 import StoreProvider from "@/redux/StoreProvider";
@@ -16,13 +17,14 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html lang="en">
+    <html lang="en" suppressHydrationWarning>
       <body className="w-full min-h-screen flex flex-col bg-slate-50 text-slate-900">
         {" "}
         <Provider>
           <StoreProvider>
             <InitUser />
             {children}
+            <Toaster />
           </StoreProvider>
         </Provider>
       </body>
