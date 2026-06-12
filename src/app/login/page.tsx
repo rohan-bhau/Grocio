@@ -3,7 +3,7 @@
 import { motion } from "motion/react";
 import { signIn } from "next-auth/react";
 import Link from "next/link";
-import { useRouter, useSearchParams } from "next/navigation";
+import { useSearchParams } from "next/navigation";
 import { FormEvent, Suspense, useState } from "react";
 import { BiLeaf } from "react-icons/bi";
 import { CiMail } from "react-icons/ci";
@@ -20,7 +20,6 @@ const LoginForm = () => {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
 
-  const router = useRouter();
   const searchParams = useSearchParams();
   const isValid = email && password.length >= 6;
 
@@ -43,23 +42,24 @@ const LoginForm = () => {
       }
 
       if (result?.ok) {
-        // Get the session to find the user role
+        // Wait a moment for the session cookie to be fully set
+        // before fetching session and redirecting
+        await new Promise((resolve) => setTimeout(resolve, 500));
+
         const sessionRes = await fetch("/api/auth/session");
         const session = await sessionRes.json();
         const role = session?.user?.role;
 
-        // Redirect based on role
         if (role === "admin") {
-          window.location.href = "/admin";
+          window.location.replace("/admin");
         } else if (role === "deliveryBoy") {
-          window.location.href = "/delivery";
+          window.location.replace("/delivery");
         } else {
-          // For regular users check if there is a callbackUrl
           const callbackUrl = searchParams.get("callbackUrl");
           if (callbackUrl && !callbackUrl.includes("/login")) {
-            window.location.href = callbackUrl;
+            window.location.replace(callbackUrl);
           } else {
-            window.location.href = "/";
+            window.location.replace("/");
           }
         }
       }

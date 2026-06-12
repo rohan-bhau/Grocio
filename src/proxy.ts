@@ -10,7 +10,7 @@ export async function proxy(req: NextRequest) {
     return NextResponse.next()
   }
 
-  // Homepage is public - anyone can see it without login
+  // Homepage is public
   if (pathname === "/") {
     return NextResponse.next()
   }
@@ -27,7 +27,8 @@ export async function proxy(req: NextRequest) {
   const role = token.role
 
   // Role based protection
-  if (pathname.startsWith("/user") && role !== "user") {
+  // If a user role tries to access /admin or /delivery - block
+  if (pathname.startsWith("/admin") && role !== "admin") {
     return NextResponse.redirect(new URL("/unauthorized", req.url))
   }
 
@@ -35,7 +36,7 @@ export async function proxy(req: NextRequest) {
     return NextResponse.redirect(new URL("/unauthorized", req.url))
   }
 
-  if (pathname.startsWith("/admin") && role !== "admin") {
+  if (pathname.startsWith("/user") && role !== "user") {
     return NextResponse.redirect(new URL("/unauthorized", req.url))
   }
 
