@@ -1,5 +1,6 @@
 "use client";
 
+import { auth } from "@/auth";
 import { motion } from "motion/react";
 import { signIn } from "next-auth/react";
 import Link from "next/link";
@@ -44,10 +45,7 @@ const LoginForm = () => {
       if (result?.ok) {
         // Wait a moment for the session cookie to be fully set
         // before fetching session and redirecting
-        await new Promise((resolve) => setTimeout(resolve, 500));
-
-        const sessionRes = await fetch("/api/auth/session");
-        const session = await sessionRes.json();
+        const session = await auth();
         const role = session?.user?.role;
 
         if (role === "admin") {
