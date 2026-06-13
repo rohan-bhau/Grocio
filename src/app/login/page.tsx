@@ -1,8 +1,7 @@
 "use client";
 
-import { auth } from "@/auth";
 import { motion } from "motion/react";
-import { signIn } from "next-auth/react";
+import { getSession, signIn } from "next-auth/react";
 import Link from "next/link";
 import { useSearchParams } from "next/navigation";
 import { FormEvent, Suspense, useState } from "react";
@@ -45,7 +44,8 @@ const LoginForm = () => {
       if (result?.ok) {
         // Wait a moment for the session cookie to be fully set
         // before fetching session and redirecting
-        const session = await auth();
+        const session = await getSession()
+        console.log(session)
         const role = session?.user?.role;
 
         if (role === "admin") {
