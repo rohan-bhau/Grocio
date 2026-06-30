@@ -3,6 +3,7 @@ import DeliverySidebar from "@/components/DeliveryBoySlideBar";
 import Navbar from "@/components/Navbar";
 import connectDb from "@/lib/db";
 import User from "@/models/user.model";
+import { redirect } from "next/navigation";
 
 export default async function AdminLayout({
   children,
@@ -14,6 +15,11 @@ export default async function AdminLayout({
 
   const user = await User.findById(session?.user?.id);
   const plainUser = JSON.parse(JSON.stringify(user));
+
+  const role = user?.role
+  if (role !== "deliveryBoy") {
+    redirect("/unauthorized")
+  }
 
   return (
     <div className="h-screen bg-[#F8F9FC] text-gray-800 flex overflow-hidden">

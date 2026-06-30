@@ -3,6 +3,7 @@ import AdminSidebar from "@/components/AdminSlidebar";
 import Navbar from "@/components/Navbar";
 import connectDb from "@/lib/db";
 import User from "@/models/user.model";
+import { redirect } from "next/navigation";
 
 export default async function AdminLayout({
   children,
@@ -13,7 +14,14 @@ export default async function AdminLayout({
   const session = await auth();
 
   const user = await User.findById(session?.user?.id);
+  // console.log(user)
   const plainUser = JSON.parse(JSON.stringify(user));
+  const role = user?.role 
+  // console.log(role)
+
+  if (role !== "admin") {
+    redirect("/unauthorized")
+  }
 
   return (
     <div className="h-screen bg-[#F8F9FC] text-gray-800 flex overflow-hidden">
