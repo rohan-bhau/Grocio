@@ -188,25 +188,23 @@ const TrackOrderPage = () => {
   };
 
   const getSuggestions = async () => {
-    setLoading(true);
-    try {
-      const lastMessage = messages
-        ?.filter((m) => m.senderId?.toString() !== userIdStr)
-        .at(-1);
-      if (!lastMessage?.text) {
-        setLoading(false);
-        return;
-      }
-      const result = await axios.post("/api/chat/ai-suggesstions", {
-        message: lastMessage.text,
-        role: "user",
-      });
-      setSuggestions(result.data);
-    } catch (error) {
-      console.log("get suggestions error:", error);
-    } finally {
-      setLoading(false);
-    }
+        setLoading(true);
+        try {
+          const lastMessage = messages
+            ?.filter((m) => m.senderId?.toString() !== userIdStr)
+            .at(-1);
+          console.log(lastMessage);
+          const result = await axios.post("/api/chat/ai-suggesstions", {
+            message: lastMessage?.text,
+            role: "user",
+          });
+          console.log(result.data);
+          setSuggestions(result.data);
+        } catch (error) {
+          console.log("get suggestions error:", error);
+        } finally {
+          setLoading(false);
+        }
   };
 
   if (!order) {

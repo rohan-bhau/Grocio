@@ -105,10 +105,12 @@ const DeliveryChat = ({ orderId, deliveryBoyId }: Props) => {
       const lastMessage = messages
         ?.filter((m) => m.senderId?.toString() !== deliveryBoyIdStr)
         .at(-1);
+      console.log(lastMessage)
       const result = await axios.post("/api/chat/ai-suggesstions", {
-        message: lastMessage?.text || "Hi",
+        message: lastMessage?.text,
         role: "delivery_boy",
       });
+      console.log(result.data)
       setSuggestions(result.data);
     } catch (error) {
       console.log("get suggestions error:", error);

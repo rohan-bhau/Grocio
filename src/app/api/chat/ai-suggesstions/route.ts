@@ -32,7 +32,7 @@ Last message: ${message}`;
 
     // Using gemini-1.5-flash which is the correct available model name
     const response = await fetch(
-      `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${process.env.GEMINI_API_KEY}`,
+      `https://generativelanguage.googleapis.com/v1beta/models/gemini-3.5-flash:generateContent?key=${process.env.GEMINI_API_KEY}`,
       {
         method: "POST",
         headers: { "Content-Type": "application/json" },
@@ -42,13 +42,13 @@ Last message: ${message}`;
       },
     );
 
-    if (!response.ok) {
-      console.log("Gemini API error status:", response.status);
-      return NextResponse.json(
-        ["On my way!", "Almost there", "Will update you soon"],
-        { status: 200 },
-      );
-    }
+    // if (!response.ok) {
+    //   console.log("Gemini API error status:", response.status);
+    //   return NextResponse.json(
+    //     ["On my way!", "Almost there", "Will update you soon"],
+    //     { status: 200 },
+    //   );
+    // }
 
     const data = await response.json();
     const replyText = data.candidates?.[0]?.content?.parts?.[0]?.text || "";
@@ -59,20 +59,20 @@ Last message: ${message}`;
       .slice(0, 3);
 
     // Return fallback suggestions if gemini returns nothing useful
-    if (suggestions.length === 0) {
-      return NextResponse.json(
-        ["On my way!", "Almost there", "Will update you soon"],
-        { status: 200 },
-      );
-    }
+    // if (suggestions.length === 0) {
+    //   return NextResponse.json(
+    //     ["On my way!", "Almost there", "Will update you soon"],
+    //     { status: 200 },
+    //   );
+    // }
 
     return NextResponse.json(suggestions, { status: 200 });
   } catch (error) {
     console.log("ai suggestions error:", error);
     // Return fallback suggestions on error so the feature does not break
     return NextResponse.json(
-      ["On my way!", "Almost there", "Will update you soon"],
-      { status: 200 },
+      {message: `ai suggestions error ${error}`},
+      { status: 500 },
     );
   }
 }
